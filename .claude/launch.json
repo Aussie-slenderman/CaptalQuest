@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Expo (Metro)",
+      "runtimeExecutable": "/Users/theodoresmales/.local/bin/npx",
+      "runtimeArgs": ["expo", "start"],
+      "port": 8081,
+      "autoPort": true
+    },
+    {
+      "name": "Expo Web",
+      "runtimeExecutable": "/Users/theodoresmales/.local/bin/npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "19006"],
+      "port": 19006
+    },
+    {
+      "name": "Expo iOS Simulator",
+      "runtimeExecutable": "/Users/theodoresmales/.local/bin/npx",
+      "runtimeArgs": ["expo", "start", "--ios"],
+      "port": 8081
+    },
+    {
+      "name": "Expo Android Emulator",
+      "runtimeExecutable": "/Users/theodoresmales/.local/bin/npx",
+      "runtimeArgs": ["expo", "start", "--android"],
+      "port": 8081
+    }
+  ]
+}
