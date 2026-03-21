@@ -22,6 +22,7 @@ import {
 } from '../../src/utils/formatters';
 import {
   Colors,
+  LightColors,
   FontSize,
   FontWeight,
   Spacing,
@@ -69,7 +70,11 @@ function buildChartData(totalValue: number, startingBalance: number): { value: n
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PortfolioScreen() {
-  const { user, portfolio, quotes, isSidebarOpen, setSidebarOpen } = useAppStore();
+  const { user, portfolio, quotes, isSidebarOpen, setSidebarOpen, appMode, appColorMode } = useAppStore();
+  const isAdult = appMode === 'adult';
+  const adultBg = appColorMode === 'light' ? '#FFFFFF' : '#000000';
+  const isLight = appColorMode === 'light';
+  const C = isLight ? LightColors : Colors;
 
   const totalValue = portfolio?.totalValue ?? 0;
   const cashBalance = portfolio?.cashBalance ?? 0;
@@ -135,8 +140,8 @@ export default function PortfolioScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bg.primary} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isAdult ? adultBg : C.bg.primary }]}>
+      <StatusBar barStyle="light-content" backgroundColor={isAdult ? adultBg : C.bg.primary} />
       <AppHeader title="Portfolio" />
 
       <ScrollView
@@ -145,28 +150,28 @@ export default function PortfolioScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* XP / Level bar */}
-        <View style={styles.levelCard}>
+        <View style={[styles.levelCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
           <View style={styles.levelHeader}>
-            <View style={styles.levelBadge}>
+            <View style={[styles.levelBadge, { backgroundColor: C.bg.tertiary }]}>
               <Text style={[styles.levelNumber, { color: levelColor }]}>Lv.{clampedLevel}</Text>
             </View>
             <View style={styles.levelInfo}>
-              <Text style={styles.levelTitle}>{levelTitle}</Text>
-              <Text style={styles.levelXp}>
+              <Text style={[styles.levelTitle, { color: C.text.primary }]}>{levelTitle}</Text>
+              <Text style={[styles.levelXp, { color: C.text.tertiary }]}>
                 {xpInCurrentLevel} / {XP_PER_LEVEL} XP
               </Text>
             </View>
-            <Text style={styles.levelPercent}>{Math.round(xpProgress * 100)}%</Text>
+            <Text style={[styles.levelPercent, { color: C.text.secondary }]}>{Math.round(xpProgress * 100)}%</Text>
           </View>
-          <View style={styles.xpBarTrack}>
+          <View style={[styles.xpBarTrack, { backgroundColor: C.bg.tertiary }]}>
             <View style={[styles.xpBarFill, { width: `${xpProgress * 100}%`, backgroundColor: levelColor }]} />
           </View>
         </View>
 
         {/* Portfolio Value Hero */}
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>Total Portfolio Value</Text>
-          <Text style={styles.heroValue}>{formatCurrency(totalValue)}</Text>
+        <View style={[styles.heroCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+          <Text style={[styles.heroLabel, { color: C.text.secondary }]}>Total Portfolio Value</Text>
+          <Text style={[styles.heroValue, { color: C.text.primary }]}>{formatCurrency(totalValue)}</Text>
           <View style={styles.heroPnlRow}>
             <View style={[styles.heroPnlBadge, {
               backgroundColor: isGain ? Colors.market.gainBg : Colors.market.lossBg,
@@ -178,31 +183,31 @@ export default function PortfolioScreen() {
               </Text>
             </View>
           </View>
-          <View style={styles.cashRow}>
+          <View style={[styles.cashRow, { borderTopColor: C.border.default }]}>
             <View style={styles.cashItem}>
-              <Text style={styles.cashLabel}>Cash Balance</Text>
-              <Text style={styles.cashValue}>{formatCurrency(cashBalance)}</Text>
+              <Text style={[styles.cashLabel, { color: C.text.tertiary }]}>Cash Balance</Text>
+              <Text style={[styles.cashValue, { color: C.text.primary }]}>{formatCurrency(cashBalance)}</Text>
             </View>
-            <View style={styles.cashDivider} />
+            <View style={[styles.cashDivider, { backgroundColor: C.border.default }]} />
             <View style={styles.cashItem}>
-              <Text style={styles.cashLabel}>Invested</Text>
-              <Text style={styles.cashValue}>
+              <Text style={[styles.cashLabel, { color: C.text.tertiary }]}>Invested</Text>
+              <Text style={[styles.cashValue, { color: C.text.primary }]}>
                 {formatCurrency(portfolio?.investedValue ?? 0)}
               </Text>
             </View>
-            <View style={styles.cashDivider} />
+            <View style={[styles.cashDivider, { backgroundColor: C.border.default }]} />
             <View style={styles.cashItem}>
-              <Text style={styles.cashLabel}>Starting</Text>
-              <Text style={styles.cashValue}>{formatCurrency(startingBalance)}</Text>
+              <Text style={[styles.cashLabel, { color: C.text.tertiary }]}>Starting</Text>
+              <Text style={[styles.cashValue, { color: C.text.primary }]}>{formatCurrency(startingBalance)}</Text>
             </View>
           </View>
         </View>
 
         {/* Portfolio Chart */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Performance (30 Days)</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Performance (30 Days)</Text>
         </View>
-        <View style={styles.chartCard}>
+        <View style={[styles.chartCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
           <LineChart
             data={chartData}
             width={320}
@@ -230,14 +235,14 @@ export default function PortfolioScreen() {
 
         {/* Holdings */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Holdings ({enrichedHoldings.length})</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Holdings ({enrichedHoldings.length})</Text>
         </View>
 
         {enrichedHoldings.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={[styles.emptyCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             <Text style={styles.emptyIcon}>📂</Text>
-            <Text style={styles.emptyText}>No holdings yet</Text>
-            <Text style={styles.emptySubtext}>Buy your first stock to get started.</Text>
+            <Text style={[styles.emptyText, { color: C.text.secondary }]}>No holdings yet</Text>
+            <Text style={[styles.emptySubtext, { color: C.text.tertiary }]}>Buy your first stock to get started.</Text>
             <TouchableOpacity
               style={styles.emptyButton}
               onPress={() => router.push('/(app)/trade')}
@@ -246,32 +251,32 @@ export default function PortfolioScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             {enrichedHoldings.map((holding, i) => {
               const up = holding.gainLoss >= 0;
               return (
                 <TouchableOpacity
                   key={holding.symbol}
-                  style={[styles.holdingRow, i < enrichedHoldings.length - 1 && styles.holdingRowBorder]}
+                  style={[styles.holdingRow, i < enrichedHoldings.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border.subtle }]}
                   onPress={() => handleStockPress(holding.symbol)}
                 >
                   <View style={styles.holdingLeft}>
-                    <View style={styles.holdingAvatar}>
+                    <View style={[styles.holdingAvatar, { backgroundColor: C.bg.input, borderColor: C.border.default }]}>
                       <Text style={styles.holdingAvatarText}>{holding.symbol.charAt(0)}</Text>
                     </View>
                     <View style={styles.holdingMeta}>
-                      <Text style={styles.holdingSymbol}>{holding.symbol}</Text>
-                      <Text style={styles.holdingShares}>
+                      <Text style={[styles.holdingSymbol, { color: C.text.primary }]}>{holding.symbol}</Text>
+                      <Text style={[styles.holdingShares, { color: C.text.secondary }]}>
                         {formatShares(holding.shares)} shares
                       </Text>
-                      <Text style={styles.holdingAvgCost}>
+                      <Text style={[styles.holdingAvgCost, { color: C.text.tertiary }]}>
                         Avg {formatCurrency(holding.avgCostBasis)}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.holdingRight}>
-                    <Text style={styles.holdingValue}>{formatCurrency(holding.currentValue)}</Text>
-                    <Text style={styles.holdingPrice}>@ {formatCurrency(holding.currentPrice)}</Text>
+                    <Text style={[styles.holdingValue, { color: C.text.primary }]}>{formatCurrency(holding.currentValue)}</Text>
+                    <Text style={[styles.holdingPrice, { color: C.text.tertiary }]}>@ {formatCurrency(holding.currentPrice)}</Text>
                     <Text style={[styles.holdingGainLoss, { color: up ? Colors.market.gain : Colors.market.loss }]}>
                       {up ? '+' : ''}{formatCurrency(holding.gainLoss)}
                     </Text>
@@ -292,12 +297,12 @@ export default function PortfolioScreen() {
 
         {/* Performance Stats */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Performance Stats</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Performance Stats</Text>
         </View>
         <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             <Text style={styles.statIcon}>🏆</Text>
-            <Text style={styles.statLabel}>Best Trade</Text>
+            <Text style={[styles.statLabel, { color: C.text.tertiary }]}>Best Trade</Text>
             <Text style={[styles.statValue, { color: Colors.market.gain }]}>
               {biggestWinner ? biggestWinner.symbol : '—'}
             </Text>
@@ -307,9 +312,9 @@ export default function PortfolioScreen() {
               </Text>
             )}
           </View>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             <Text style={styles.statIcon}>📉</Text>
-            <Text style={styles.statLabel}>Worst Trade</Text>
+            <Text style={[styles.statLabel, { color: C.text.tertiary }]}>Worst Trade</Text>
             <Text style={[styles.statValue, { color: Colors.market.loss }]}>
               {biggestLoser ? biggestLoser.symbol : '—'}
             </Text>
@@ -319,31 +324,31 @@ export default function PortfolioScreen() {
               </Text>
             )}
           </View>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             <Text style={styles.statIcon}>🔁</Text>
-            <Text style={styles.statLabel}>Total Trades</Text>
-            <Text style={styles.statValue}>{orders.length}</Text>
-            <Text style={styles.statSub}>orders placed</Text>
+            <Text style={[styles.statLabel, { color: C.text.tertiary }]}>Total Trades</Text>
+            <Text style={[styles.statValue, { color: C.text.primary }]}>{orders.length}</Text>
+            <Text style={[styles.statSub, { color: C.text.tertiary }]}>orders placed</Text>
           </View>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             <Text style={styles.statIcon}>📅</Text>
-            <Text style={styles.statLabel}>Portfolio Age</Text>
-            <Text style={styles.statValue}>{portfolioAgeDays}</Text>
-            <Text style={styles.statSub}>days active</Text>
+            <Text style={[styles.statLabel, { color: C.text.tertiary }]}>Portfolio Age</Text>
+            <Text style={[styles.statValue, { color: C.text.primary }]}>{portfolioAgeDays}</Text>
+            <Text style={[styles.statSub, { color: C.text.tertiary }]}>days active</Text>
           </View>
         </View>
 
         {/* Recent Activity */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Recent Activity</Text>
         </View>
 
         {recentOrders.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No transactions yet.</Text>
+          <View style={[styles.emptyCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.emptyText, { color: C.text.secondary }]}>No transactions yet.</Text>
           </View>
         ) : (
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             {recentOrders.map((order, i) => {
               const isBuy = order.type === 'buy';
               const ts = order.filledAt ?? order.createdAt;
@@ -351,7 +356,7 @@ export default function PortfolioScreen() {
               return (
                 <TouchableOpacity
                   key={order.id}
-                  style={[styles.activityRow, i < recentOrders.length - 1 && styles.activityRowBorder]}
+                  style={[styles.activityRow, i < recentOrders.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border.subtle }]}
                   onPress={() => handleStockPress(order.symbol)}
                 >
                   <View style={[styles.activityIcon, {
@@ -365,10 +370,10 @@ export default function PortfolioScreen() {
                   </View>
                   <View style={styles.activityMeta}>
                     <View style={styles.activityTitleRow}>
-                      <Text style={styles.activityType}>{isBuy ? 'Bought' : 'Sold'}</Text>
+                      <Text style={[styles.activityType, { color: C.text.primary }]}>{isBuy ? 'Bought' : 'Sold'}</Text>
                       <Text style={styles.activitySymbol}>{order.symbol}</Text>
                     </View>
-                    <Text style={styles.activityDetail}>
+                    <Text style={[styles.activityDetail, { color: C.text.secondary }]}>
                       {order.filledShares != null
                         ? `${formatShares(order.filledShares)} shares`
                         : order.shares != null
@@ -378,7 +383,7 @@ export default function PortfolioScreen() {
                         ? ` @ ${formatCurrency(order.filledPrice)}`
                         : ''}
                     </Text>
-                    <Text style={styles.activityTime}>{formatRelativeTime(ts)}</Text>
+                    <Text style={[styles.activityTime, { color: C.text.tertiary }]}>{formatRelativeTime(ts)}</Text>
                   </View>
                   <View style={styles.activityRight}>
                     {order.filledPrice != null && order.filledShares != null ? (
@@ -388,7 +393,7 @@ export default function PortfolioScreen() {
                         {isBuy ? '-' : '+'}{formatCurrency(order.filledPrice * order.filledShares)}
                       </Text>
                     ) : (
-                      <Text style={styles.activityTotal}>—</Text>
+                      <Text style={[styles.activityTotal, { color: C.text.primary }]}>—</Text>
                     )}
                     <View style={[styles.activityStatusBadge, {
                       backgroundColor:
@@ -396,7 +401,7 @@ export default function PortfolioScreen() {
                           ? Colors.market.gainBg
                           : order.status === 'cancelled' || order.status === 'rejected'
                           ? Colors.market.lossBg
-                          : Colors.bg.tertiary,
+                          : C.bg.tertiary,
                     }]}>
                       <Text style={[styles.activityStatus, {
                         color:
@@ -404,7 +409,7 @@ export default function PortfolioScreen() {
                             ? Colors.market.gain
                             : order.status === 'cancelled' || order.status === 'rejected'
                             ? Colors.market.loss
-                            : Colors.text.secondary,
+                            : C.text.secondary,
                       }]}>
                         {order.status.toUpperCase()}
                       </Text>

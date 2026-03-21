@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { useAppStore } from '../store/useAppStore';
-import { Colors, FontSize, FontWeight, Spacing } from '../constants/theme';
+import { Colors, LightColors, FontSize, FontWeight, Spacing } from '../constants/theme';
 
 interface AppHeaderProps {
   /** Screen name shown on the left */
@@ -12,9 +12,12 @@ interface AppHeaderProps {
 export default function AppHeader({ title }: AppHeaderProps) {
   const {
     notifications, unreadCount,
-    bling,
+    bling, appMode, appColorMode,
     isSidebarOpen, setSidebarOpen,
   } = useAppStore();
+
+  const isLight = appColorMode === 'light';
+  const C = isLight ? LightColors : Colors;
 
   const unreadNotifs =
     notifications.filter(n => !n.read).length + (unreadCount ?? 0);
@@ -26,18 +29,20 @@ export default function AppHeader({ title }: AppHeaderProps) {
   };
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: C.bg.primary, borderBottomColor: C.border.default }, appMode === 'adult' && styles.headerAdult]}>
       {/* Left: screen title */}
-      <Text style={styles.title} numberOfLines={1}>{title}</Text>
+      <Text style={[styles.title, { color: C.text.primary }]} numberOfLines={1}>{title}</Text>
 
       {/* Right: bling → bell → hamburger */}
       <View style={styles.right}>
 
-        {/* 💎 Bling counter */}
-        <View style={styles.blingPill}>
-          <Text style={styles.blingGem}>💎</Text>
-          <Text style={styles.blingText}>{formatBling(bling ?? 0)}</Text>
-        </View>
+        {/* 💎 Bling counter — hidden in adult mode */}
+        {appMode !== 'adult' && (
+          <View style={[styles.blingPill, { backgroundColor: C.bg.tertiary, borderColor: C.border.default }]}>
+            <Text style={styles.blingGem}>💎</Text>
+            <Text style={styles.blingText}>{formatBling(bling ?? 0)}</Text>
+          </View>
+        )}
 
         {/* 🔔 Bell */}
         <TouchableOpacity
@@ -46,7 +51,7 @@ export default function AppHeader({ title }: AppHeaderProps) {
           activeOpacity={0.7}
         >
           <Text style={styles.iconEmoji}>🔔</Text>
-          {unreadNotifs > 0 && <View style={styles.notifDot} />}
+          {unreadNotifs > 0 && <View style={[styles.notifDot, { borderColor: C.bg.primary }]} />}
         </TouchableOpacity>
 
         {/* ☰ Sidebar toggle */}
@@ -56,12 +61,12 @@ export default function AppHeader({ title }: AppHeaderProps) {
           activeOpacity={0.7}
         >
           {isSidebarOpen ? (
-            <Text style={styles.closeText}>✕</Text>
+            <Text style={[styles.closeText, { color: C.text.secondary }]}>✕</Text>
           ) : (
             <View style={styles.hamburger}>
-              <View style={styles.hLine} />
-              <View style={[styles.hLine, { width: 14 }]} />
-              <View style={styles.hLine} />
+              <View style={[styles.hLine, { backgroundColor: C.text.secondary }]} />
+              <View style={[styles.hLine, { width: 14, backgroundColor: C.text.secondary }]} />
+              <View style={[styles.hLine, { backgroundColor: C.text.secondary }]} />
             </View>
           )}
         </TouchableOpacity>
@@ -91,6 +96,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+
+  headerAdult: {
+    backgroundColor: '#000000',
+    borderBottomColor: '#1a1a1a',
   },
 
   // Bling pill

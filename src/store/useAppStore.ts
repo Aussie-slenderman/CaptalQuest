@@ -104,6 +104,10 @@ interface AppState {
   // News read tracking
   newsLastRead: number;
   setNewsLastRead: (ts: number) => void;
+
+  // App mode (kids = full experience, adult = no avatars/pets/trophy road)
+  appMode: 'kids' | 'adult';
+  setAppMode: (mode: 'kids' | 'adult') => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -264,4 +268,8 @@ export const useAppStore = create<AppState>((set) => ({
   // News read tracking
   newsLastRead: 0,
   setNewsLastRead: (newsLastRead) => set({ newsLastRead }),
+
+  // App mode
+  appMode: 'kids',
+  setAppMode: (appMode) => set({ appMode }),
 }));

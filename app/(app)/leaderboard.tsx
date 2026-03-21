@@ -26,7 +26,7 @@ import { getLeaderboard } from '../../src/services/auth';
 import {
   formatCurrency,
 } from '../../src/utils/formatters';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
+import { Colors, LightColors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 import { ACHIEVEMENTS, getXPProgress, getLevelFromXP } from '../../src/constants/achievements';
 import type { LeaderboardEntry, LeaderboardType, Achievement } from '../../src/types';
 
@@ -83,10 +83,14 @@ function buildUserEntry(
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function LeaderboardScreen() {
-  const { user, portfolio, globalLeaderboard, localLeaderboard, setGlobalLeaderboard, setLocalLeaderboard, appColorMode, appTabColors, isSidebarOpen, setSidebarOpen } = useAppStore();
+  const { user, portfolio, globalLeaderboard, localLeaderboard, setGlobalLeaderboard, setLocalLeaderboard, appColorMode, appTabColors, isSidebarOpen, setSidebarOpen, appMode } = useAppStore();
   const tabColor = appTabColors['leaderboard'] ?? '#F5C518';
   const isLight = appColorMode === 'light';
-  const screenBg = isLight ? '#FFF8EC' : '#8C6400';
+  const C = isLight ? LightColors : Colors;
+  const isAdult = appMode === 'adult';
+  const gcFull = (a: string, b: string, c: string, d: string) => isAdult ? ['transparent','transparent','transparent','#000000'] as any : [a,b,c,d] as any;
+  const gc = (a: string, b: string, c: string) => isAdult ? ['transparent','transparent','transparent'] as any : [a,b,c] as any;
+  const screenBg = isLight ? '#FFFFFF' : '#000000';
 
   const [activeTab, setActiveTab] = useState<LeaderboardType>('global');
   const [activePeriod, setActivePeriod] = useState<TimePeriod>('monthly');
@@ -255,19 +259,19 @@ export default function LeaderboardScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: screenBg }]} edges={['top']}>
       {/* Full-screen colour wash — top */}
       <LinearGradient
-        colors={[`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg] as any}
+        colors={gcFull(`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       {/* Full-screen wash — bottom */}
       <LinearGradient
-        colors={['transparent', `${tabColor}30`, `${tabColor}40`] as any}
+        colors={gc('transparent', `${tabColor}30`, `${tabColor}40`)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       {/* Side glow */}
       <LinearGradient
-        colors={[`${tabColor}28`, 'transparent', `${tabColor}28`] as any}
+        colors={gc(`${tabColor}28`, 'transparent', `${tabColor}28`)}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
@@ -289,7 +293,7 @@ export default function LeaderboardScreen() {
       >
         {/* ── XP Progress Banner ── */}
         {user && (
-          <View style={styles.xpBanner}>
+          <View style={[styles.xpBanner, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             <View style={styles.xpBannerTop}>
               <View style={styles.xpLevelBadge}>
                 <Text style={styles.xpLevelIcon}>{levelInfo.icon}</Text>
@@ -297,13 +301,13 @@ export default function LeaderboardScreen() {
                   <Text style={[styles.xpLevelName, { color: levelColor }]}>
                     {levelInfo.title}
                   </Text>
-                  <Text style={styles.xpLevelNum}>Level {levelInfo.level}</Text>
+                  <Text style={[styles.xpLevelNum, { color: C.text.secondary }]}>Level {levelInfo.level}</Text>
                 </View>
               </View>
               <View style={styles.xpValueContainer}>
-                <Text style={styles.xpValue}>{userXP.toLocaleString()} XP</Text>
+                <Text style={[styles.xpValue, { color: C.text.primary }]}>{userXP.toLocaleString()} XP</Text>
                 {xpInfo.nextLevel && (
-                  <Text style={styles.xpNextLevel}>
+                  <Text style={[styles.xpNextLevel, { color: C.text.tertiary }]}>
                     {xpInfo.xpInLevel} / {xpInfo.xpNeeded} to Lvl {xpInfo.nextLevel.level}
                   </Text>
                 )}
@@ -325,8 +329,8 @@ export default function LeaderboardScreen() {
 
         {/* ── User Stats Card ── */}
         {user && portfolio && (
-          <View style={styles.statsCard}>
-            <Text style={styles.statsCardTitle}>Your Performance</Text>
+          <View style={[styles.statsCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.statsCardTitle, { color: C.text.primary }]}>Your Performance</Text>
             <View style={styles.statsRow}>
               <StatsItem
                 label="Current Rank"
@@ -353,11 +357,11 @@ export default function LeaderboardScreen() {
 
         {/* ── Tab Bar ── */}
         <View style={styles.tabBarContainer}>
-          <View style={styles.tabBar}>
+          <View style={[styles.tabBar, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             <Animated.View
               style={[
                 styles.tabIndicator,
-                { width: tabWidth - 8, transform: [{ translateX: tabBarAnim }] },
+                { width: tabWidth - 8, transform: [{ translateX: tabBarAnim }], backgroundColor: C.bg.tertiary },
               ]}
             />
             {TAB_LABELS.map(tab => (
@@ -368,6 +372,7 @@ export default function LeaderboardScreen() {
               >
                 <Text style={[
                   styles.tabText,
+                  { color: C.text.tertiary },
                   activeTab === tab.key && styles.tabTextActive,
                 ]}>
                   {tab.label}
@@ -382,11 +387,11 @@ export default function LeaderboardScreen() {
           {PERIOD_LABELS.map(p => (
             <TouchableOpacity
               key={p.key}
-              style={[styles.periodPill, activePeriod === p.key && styles.periodPillActive]}
+              style={[styles.periodPill, { backgroundColor: C.bg.secondary, borderColor: C.border.default }, activePeriod === p.key && styles.periodPillActive]}
               onPress={() => setActivePeriod(p.key)}
             >
               <Text style={styles.periodPillIcon}>{p.icon}</Text>
-              <Text style={[styles.periodPillText, activePeriod === p.key && styles.periodPillTextActive]}>
+              <Text style={[styles.periodPillText, { color: C.text.secondary }, activePeriod === p.key && styles.periodPillTextActive]}>
                 {p.label}
               </Text>
             </TouchableOpacity>
@@ -396,7 +401,7 @@ export default function LeaderboardScreen() {
         {/* ── Period Label ── */}
         <View style={styles.periodLabelRow}>
           <View style={styles.periodLabelDot} />
-          <Text style={styles.periodLabelText}>
+          <Text style={[styles.periodLabelText, { color: C.text.tertiary }]}>
             {PERIOD_LABELS.find(p => p.key === activePeriod)?.desc} Rankings
           </Text>
         </View>
@@ -405,13 +410,13 @@ export default function LeaderboardScreen() {
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator color={Colors.brand.primary} size="large" />
-            <Text style={styles.loadingText}>Loading rankings…</Text>
+            <Text style={[styles.loadingText, { color: C.text.secondary }]}>Loading rankings…</Text>
           </View>
         ) : entries.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>🏆</Text>
-            <Text style={styles.emptyTitle}>No Rankings Yet</Text>
-            <Text style={styles.emptySubtitle}>
+            <Text style={[styles.emptyTitle, { color: C.text.primary }]}>No Rankings Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: C.text.secondary }]}>
               {activeTab === 'club'
                 ? 'Join a trading club to see club rankings.'
                 : activeTab === 'friends'
@@ -425,7 +430,7 @@ export default function LeaderboardScreen() {
               <LeaderboardRow key={entry.userId + entry.rank} entry={entry} getInitials={getInitials} />
             ))}
             {entries.length > 20 && (
-              <Text style={styles.moreEntriesText}>
+              <Text style={[styles.moreEntriesText, { color: C.text.tertiary }]}>
                 +{entries.length - 20} more traders
               </Text>
             )}
@@ -434,9 +439,9 @@ export default function LeaderboardScreen() {
 
         {/* ── Sticky Current User Row (if not in view) ── */}
         {!isLoading && !userInView && currentUserEntry && (
-          <View style={styles.stickyUserContainer}>
+          <View style={[styles.stickyUserContainer, { borderTopColor: C.border.default }]}>
             <View style={styles.stickyUserLabel}>
-              <Text style={styles.stickyUserLabelText}>Your Position</Text>
+              <Text style={[styles.stickyUserLabelText, { color: C.text.tertiary }]}>Your Position</Text>
             </View>
             <LeaderboardRow entry={currentUserEntry} getInitials={getInitials} isSticky />
           </View>
@@ -444,8 +449,8 @@ export default function LeaderboardScreen() {
 
         {/* ── Achievements ── */}
         <View style={styles.achievementsSection}>
-          <Text style={styles.sectionTitle}>Achievements</Text>
-          <Text style={styles.achievementsSubtitle}>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Achievements</Text>
+          <Text style={[styles.achievementsSubtitle, { color: C.text.secondary }]}>
             {userAchievements.size} / {ACHIEVEMENTS.length} unlocked
           </Text>
 
@@ -454,7 +459,7 @@ export default function LeaderboardScreen() {
             const categoryAchievements = ACHIEVEMENTS.filter(a => a.category === category);
             return (
               <View key={category} style={styles.achievementCategory}>
-                <Text style={styles.achievementCategoryTitle}>
+                <Text style={[styles.achievementCategoryTitle, { color: C.text.secondary }]}>
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </Text>
                 <View style={styles.achievementsGrid}>
@@ -488,6 +493,8 @@ interface LeaderboardRowProps {
 }
 
 function LeaderboardRow({ entry, getInitials, isSticky }: LeaderboardRowProps) {
+  const { appColorMode } = useAppStore();
+  const LC = appColorMode === 'light' ? LightColors : Colors;
   const rankStyle = getRankStyle(entry.rank);
   const isGain = entry.gainDollars >= 0;
   const gainColor = isGain ? Colors.market.gain : Colors.market.loss;
@@ -496,15 +503,17 @@ function LeaderboardRow({ entry, getInitials, isSticky }: LeaderboardRowProps) {
   return (
     <View style={[
       styles.leaderboardRow,
+      { backgroundColor: LC.bg.secondary, borderColor: LC.border.default },
       entry.isCurrentUser && styles.leaderboardRowHighlight,
       isSticky && styles.leaderboardRowSticky,
+      isSticky && { backgroundColor: LC.bg.tertiary },
     ]}>
       {/* Rank */}
       <View style={[styles.rankContainer, { backgroundColor: rankStyle.bg }]}>
         {entry.rank <= 3 ? (
           <Text style={styles.rankMedal}>{rankStyle.label}</Text>
         ) : (
-          <Text style={[styles.rankNumber, { color: rankStyle.color }]}>#{entry.rank}</Text>
+          <Text style={[styles.rankNumber, { color: rankStyle.color }]} >#{entry.rank}</Text>
         )}
       </View>
 
@@ -518,7 +527,7 @@ function LeaderboardRow({ entry, getInitials, isSticky }: LeaderboardRowProps) {
       {/* Name + username */}
       <View style={styles.playerInfo}>
         <View style={styles.playerNameRow}>
-          <Text style={styles.playerDisplayName} numberOfLines={1}>
+          <Text style={[styles.playerDisplayName, { color: LC.text.primary }]} numberOfLines={1}>
             {entry.displayName}
           </Text>
           {entry.isCurrentUser && (
@@ -527,7 +536,7 @@ function LeaderboardRow({ entry, getInitials, isSticky }: LeaderboardRowProps) {
             </View>
           )}
         </View>
-        <Text style={styles.playerUsername}>@{entry.username}</Text>
+        <Text style={[styles.playerUsername, { color: LC.text.tertiary }]}>@{entry.username}</Text>
       </View>
 
       {/* Gain + level */}
@@ -551,9 +560,12 @@ interface AchievementCardProps {
 }
 
 function AchievementCard({ achievement, unlocked }: AchievementCardProps) {
+  const { appColorMode } = useAppStore();
+  const AC = appColorMode === 'light' ? LightColors : Colors;
   return (
     <View style={[
       styles.achievementCard,
+      { backgroundColor: AC.bg.secondary, borderColor: AC.border.default },
       !unlocked && styles.achievementCardLocked,
     ]}>
       <Text style={[styles.achievementIcon, !unlocked && styles.achievementIconLocked]}>
@@ -561,6 +573,7 @@ function AchievementCard({ achievement, unlocked }: AchievementCardProps) {
       </Text>
       <Text style={[
         styles.achievementTitle,
+        { color: AC.text.primary },
         !unlocked && styles.achievementTitleLocked,
       ]} numberOfLines={2}>
         {achievement.title}
@@ -586,15 +599,17 @@ interface StatsItemProps {
 }
 
 function StatsItem({ label, value, highlight, colored, positive }: StatsItemProps) {
+  const { appColorMode } = useAppStore();
+  const SIC = appColorMode === 'light' ? LightColors : Colors;
   const valueColor = colored
     ? (positive ? Colors.market.gain : Colors.market.loss)
     : highlight
       ? Colors.brand.primary
-      : Colors.text.primary;
+      : SIC.text.primary;
 
   return (
     <View style={styles.statsItem}>
-      <Text style={styles.statsItemLabel}>{label}</Text>
+      <Text style={[styles.statsItemLabel, { color: SIC.text.tertiary }]}>{label}</Text>
       <Text style={[styles.statsItemValue, { color: valueColor }]}>{value}</Text>
     </View>
   );
@@ -605,7 +620,7 @@ function StatsItem({ label, value, highlight, colored, positive }: StatsItemProp
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#8C6400',
+    backgroundColor: '#8C6400', // overridden inline
   },
   flex: {
     flex: 1,

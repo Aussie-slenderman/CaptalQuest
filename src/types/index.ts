@@ -141,6 +141,7 @@ export interface User {
   onboardingComplete: boolean;
   startingBalance: number;
   welcomeShown?: boolean;
+  appMode?: 'kids' | 'adult';
 }
 
 // ─── Gamification Types ──────────────────────────────────────────────────────

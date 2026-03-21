@@ -50,7 +50,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, EBSta
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { setUser, setAuthLoading, setShowWelcomePopup } = useAppStore();
+  const { setUser, setAuthLoading, setShowWelcomePopup, setAppMode, appMode } = useAppStore();
 
   useEffect(() => {
     const unsub = onAuthChange(async (session: unknown) => {
@@ -58,6 +58,9 @@ export default function RootLayout() {
       if (s?.uid) {
         const userData = await getUserById(s.uid);
         setUser(userData as import('../src/types').User);
+        // Sync app mode from saved profile
+        const mode = (userData as Record<string, unknown>)?.appMode as 'kids' | 'adult' | undefined;
+        if (mode === 'kids' || mode === 'adult') setAppMode(mode);
         if (!userData || !(userData as Record<string, unknown>).onboardingComplete) {
           router.replace('/(auth)/tutorial');
         } else {
@@ -78,11 +81,13 @@ export default function RootLayout() {
     return unsub as () => void;
   }, []);
 
+  const shellBg = appMode === 'adult' ? '#000000' : Colors.bg.primary;
+
   return (
     <ErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg.primary }}>
-        <StatusBar style="light" backgroundColor={Colors.bg.primary} />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.bg.primary } }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: shellBg }}>
+        <StatusBar style="light" backgroundColor={shellBg} />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: shellBg } }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(app)" />
         </Stack>

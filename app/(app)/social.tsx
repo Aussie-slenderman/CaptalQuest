@@ -39,7 +39,7 @@ import {
 import AppHeader from '../../src/components/AppHeader';
 import Sidebar from '../../src/components/Sidebar';
 import { useAppStore } from '../../src/store/useAppStore';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
+import { Colors, LightColors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 import { formatCurrency, formatShares, formatRelativeTime } from '../../src/utils/formatters';
 import type { ChatRoom, Message, TradeProposal, Club, ClubInvite } from '../../src/types';
 
@@ -101,7 +101,8 @@ function InitialsAvatar({
 // ─── Club Digest Header ────────────────────────────────────────────────────────
 
 function ClubDigestHeader({ club }: { club: Club }) {
-  const { globalLeaderboard, user, portfolio } = useAppStore();
+  const { globalLeaderboard, user, portfolio, appColorMode: dgAppColorMode } = useAppStore();
+  const DC = dgAppColorMode === 'light' ? LightColors : Colors;
 
   // Build member list from real leaderboard data, filtered to club members
   const memberIds = club.memberIds ?? [];
@@ -135,7 +136,7 @@ function ClubDigestHeader({ club }: { club: Club }) {
   if (allMembers.length === 0) {
     return (
       <View style={digestStyles.wrapper}>
-        <Text style={digestStyles.emptyNote}>
+        <Text style={[digestStyles.emptyNote, { color: DC.text.tertiary }]}>
           No leaderboard data for club members yet. Rankings will appear once members have traded.
         </Text>
         <View style={digestStyles.divider} />
@@ -319,7 +320,8 @@ function ChatModal({
   onClose: () => void;
   club?: Club;
 }) {
-  const { user } = useAppStore();
+  const { user, appColorMode } = useAppStore();
+  const CMC = appColorMode === 'light' ? LightColors : Colors;
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
@@ -444,11 +446,11 @@ function ChatModal({
             isOwn ? styles.bubbleOwn : styles.bubbleOther,
           ]}
         >
-          <Text style={[styles.messageText, isOwn && { color: Colors.text.primary }]}>
+          <Text style={[styles.messageText, { color: CMC.text.primary }, isOwn && { color: CMC.text.primary }]}>
             {item.text}
           </Text>
         </View>
-        <Text style={styles.messageTime}>{formatRelativeTime(item.timestamp)}</Text>
+        <Text style={[styles.messageTime, { color: CMC.text.tertiary }]}>{formatRelativeTime(item.timestamp)}</Text>
       </View>
     );
   };
@@ -460,7 +462,7 @@ function ChatModal({
           <TouchableOpacity onPress={onClose} style={styles.chatBackBtn}>
             <Text style={styles.chatBackText}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.chatTitle} numberOfLines={1}>
+          <Text style={[styles.chatTitle, { color: CMC.text.primary }]} numberOfLines={1}>
             {room?.name ?? 'Chat'}
           </Text>
           <View style={{ width: 64 }} />
@@ -474,7 +476,7 @@ function ChatModal({
           contentContainerStyle={styles.messagesList}
           ListHeaderComponent={club ? <ClubDigestHeader club={club} /> : null}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No messages yet. Say hi!</Text>
+            <Text style={[styles.emptyText, { color: CMC.text.secondary }]}>No messages yet. Say hi!</Text>
           }
         />
 
@@ -503,7 +505,7 @@ function ChatModal({
               {sending ? (
                 <ActivityIndicator size="small" color={Colors.text.primary} />
               ) : (
-                <Text style={styles.sendBtnText}>Send</Text>
+                <Text style={[styles.sendBtnText, { color: CMC.text.primary }]}>Send</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -516,7 +518,8 @@ function ChatModal({
 // ─── Messages Tab ─────────────────────────────────────────────────────────────
 
 function MessagesTab() {
-  const { chatRooms, user, clubInvites, removeClubInvite, addMyClub } = useAppStore();
+  const { chatRooms, user, clubInvites, removeClubInvite, addMyClub, appColorMode } = useAppStore();
+  const MC = appColorMode === 'light' ? LightColors : Colors;
   const [activeChatRoom, setActiveChatRoom] = useState<ChatRoom | null>(null);
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [joiningInviteId, setJoiningInviteId] = useState<string | null>(null);
@@ -568,20 +571,20 @@ function MessagesTab() {
     const displayName = getRoomDisplayName(item);
     const lastMsg = item.lastMessage;
     return (
-      <TouchableOpacity style={styles.roomRow} onPress={() => openRoom(item)}>
+      <TouchableOpacity style={[styles.roomRow, { backgroundColor: MC.bg.primary }]} onPress={() => openRoom(item)}>
         <InitialsAvatar name={displayName} />
         <View style={styles.roomInfo}>
           <View style={styles.roomHeaderRow}>
-            <Text style={styles.roomName} numberOfLines={1}>
+            <Text style={[styles.roomName, { color: MC.text.primary }]} numberOfLines={1}>
               {displayName}
             </Text>
             {lastMsg && (
-              <Text style={styles.roomTime}>
+              <Text style={[styles.roomTime, { color: MC.text.tertiary }]}>
                 {formatRelativeTime(lastMsg.timestamp)}
               </Text>
             )}
           </View>
-          <Text style={styles.roomLastMsg} numberOfLines={1}>
+          <Text style={[styles.roomLastMsg, { color: MC.text.secondary }]} numberOfLines={1}>
             {lastMsg
               ? lastMsg.type === 'trade_proposal'
                 ? '📊 Trade Proposal'
@@ -598,22 +601,22 @@ function MessagesTab() {
 
       {/* ── Pending Invites ── */}
       {clubInvites.length > 0 && (
-        <View style={styles.inviteSection}>
-          <Text style={styles.inviteSectionLabel}>📬  Pending Invites</Text>
+        <View style={[styles.inviteSection, { borderBottomColor: MC.border.default }]}>
+          <Text style={[styles.inviteSectionLabel, { color: MC.text.secondary }]}>📬  Pending Invites</Text>
           {clubInvites.map((invite) => (
-            <View key={invite.id} style={styles.inviteCard}>
+            <View key={invite.id} style={[styles.inviteCard, { backgroundColor: MC.bg.secondary }]}>
               <View style={styles.inviteIconWrap}>
                 <Text style={styles.inviteIcon}>
                   {invite.type === 'friend_request' ? '👤' : '🏠'}
                 </Text>
               </View>
               <View style={styles.inviteInfo}>
-                <Text style={styles.inviteTitle} numberOfLines={1}>
+                <Text style={[styles.inviteTitle, { color: MC.text.primary }]} numberOfLines={1}>
                   {invite.type === 'friend_request'
                     ? `${invite.fromUsername} wants to be friends`
                     : `Join "${invite.clubName}"`}
                 </Text>
-                <Text style={styles.inviteSubtitle}>
+                <Text style={[styles.inviteSubtitle, { color: MC.text.tertiary }]}>
                   {invite.type === 'friend_request'
                     ? `Friend request · ${formatRelativeTime(invite.sentAt)}`
                     : `Club invite from ${invite.fromUsername} · ${formatRelativeTime(invite.sentAt)}`}
@@ -645,8 +648,8 @@ function MessagesTab() {
       {chatRooms.length === 0 && clubInvites.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateIcon}>💬</Text>
-          <Text style={styles.emptyStateTitle}>No conversations yet</Text>
-          <Text style={styles.emptyStateSubtitle}>
+          <Text style={[styles.emptyStateTitle, { color: MC.text.primary }]}>No conversations yet</Text>
+          <Text style={[styles.emptyStateSubtitle, { color: MC.text.secondary }]}>
             Find friends or join clubs to start chatting
           </Text>
         </View>
@@ -673,7 +676,8 @@ function MessagesTab() {
 // ─── Clubs Tab ────────────────────────────────────────────────────────────────
 
 function ClubsTab() {
-  const { user, chatRooms, setChatRooms, myClubs, setMyClubs, addMyClub, addClubInvite } = useAppStore();
+  const { user, chatRooms, setChatRooms, myClubs, setMyClubs, addMyClub, addClubInvite, appColorMode } = useAppStore();
+  const CC = appColorMode === 'light' ? LightColors : Colors;
   const [publicClubs, setPublicClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -804,12 +808,12 @@ function ClubsTab() {
   };
 
   const renderClub = (club: Club, isMember: boolean) => (
-    <View key={club.id} style={styles.clubCard}>
+    <View key={club.id} style={[styles.clubCard, { backgroundColor: CC.bg.secondary, borderColor: CC.border.default }]}>
       <View style={styles.clubCardHeader}>
         <InitialsAvatar name={club.name} color={Colors.brand.accent} />
         <View style={styles.clubCardInfo}>
-          <Text style={styles.clubName}>{club.name}</Text>
-          <Text style={styles.clubMemberCount}>
+          <Text style={[styles.clubName, { color: CC.text.primary }]}>{club.name}</Text>
+          <Text style={[styles.clubMemberCount, { color: CC.text.tertiary }]}>
             {club.memberIds?.length ?? 0} members
           </Text>
         </View>
@@ -865,7 +869,7 @@ function ClubsTab() {
         </View>
       </View>
       {club.description ? (
-        <Text style={styles.clubDescription} numberOfLines={2}>
+        <Text style={[styles.clubDescription, { color: CC.text.secondary }]} numberOfLines={2}>
           {club.description}
         </Text>
       ) : null}
@@ -885,16 +889,16 @@ function ClubsTab() {
         <ActivityIndicator color={Colors.brand.primary} style={{ marginTop: 32 }} />
       ) : (
         <>
-          <Text style={styles.sectionLabel}>My Clubs</Text>
+          <Text style={[styles.sectionLabel, { color: CC.text.secondary }]}>My Clubs</Text>
           {myClubs.length === 0 ? (
-            <Text style={styles.emptyText}>You haven't joined any clubs yet.</Text>
+            <Text style={[styles.emptyText, { color: CC.text.tertiary }]}>You haven't joined any clubs yet.</Text>
           ) : (
             myClubs.map((c) => renderClub(c, true))
           )}
 
-          <Text style={[styles.sectionLabel, { marginTop: Spacing.lg }]}>Discover</Text>
+          <Text style={[styles.sectionLabel, { marginTop: Spacing.lg, color: CC.text.secondary }]}>Discover</Text>
           {publicClubs.length === 0 ? (
-            <Text style={styles.emptyText}>No public clubs found.</Text>
+            <Text style={[styles.emptyText, { color: CC.text.tertiary }]}>No public clubs found.</Text>
           ) : (
             publicClubs.map((c) => renderClub(c, false))
           )}
@@ -924,9 +928,9 @@ function ClubsTab() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Create a Club</Text>
+            <Text style={[styles.modalTitle, { color: CC.text.primary }]}>Create a Club</Text>
 
-            <Text style={styles.fieldLabel}>Club Name</Text>
+            <Text style={[styles.fieldLabel, { color: CC.text.secondary }]}>Club Name</Text>
             <TextInput
               style={styles.modalInput}
               value={clubName}
@@ -936,7 +940,7 @@ function ClubsTab() {
               maxLength={40}
             />
 
-            <Text style={styles.fieldLabel}>Description</Text>
+            <Text style={[styles.fieldLabel, { color: CC.text.secondary }]}>Description</Text>
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               value={clubDesc}
@@ -948,7 +952,7 @@ function ClubsTab() {
             />
 
             <View style={styles.toggleRow}>
-              <Text style={styles.fieldLabel}>Public Club</Text>
+              <Text style={[styles.fieldLabel, { color: CC.text.secondary }]}>Public Club</Text>
               <Switch
                 value={isPublic}
                 onValueChange={setIsPublic}
@@ -962,7 +966,7 @@ function ClubsTab() {
                 style={styles.modalCancelBtn}
                 onPress={() => setCreateModalVisible(false)}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: CC.text.secondary }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -975,7 +979,7 @@ function ClubsTab() {
                 {creating ? (
                   <ActivityIndicator size="small" color={Colors.text.primary} />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Create</Text>
+                  <Text style={[styles.modalConfirmText, { color: CC.text.primary }]}>Create</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -992,8 +996,8 @@ function ClubsTab() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>✏️  Edit Club</Text>
-            <Text style={styles.fieldLabel}>Club Name</Text>
+            <Text style={[styles.modalTitle, { color: CC.text.primary }]}>✏️  Edit Club</Text>
+            <Text style={[styles.fieldLabel, { color: CC.text.secondary }]}>Club Name</Text>
             <TextInput
               style={styles.modalInput}
               value={editName}
@@ -1002,7 +1006,7 @@ function ClubsTab() {
               placeholderTextColor={Colors.text.tertiary}
               maxLength={40}
             />
-            <Text style={styles.fieldLabel}>Description</Text>
+            <Text style={[styles.fieldLabel, { color: CC.text.secondary }]}>Description</Text>
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               value={editDesc}
@@ -1013,7 +1017,7 @@ function ClubsTab() {
               maxLength={200}
             />
             <View style={styles.toggleRow}>
-              <Text style={styles.fieldLabel}>Public Club</Text>
+              <Text style={[styles.fieldLabel, { color: CC.text.secondary }]}>Public Club</Text>
               <Switch
                 value={editIsPublic}
                 onValueChange={setEditIsPublic}
@@ -1023,7 +1027,7 @@ function ClubsTab() {
             </View>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setEditModalVisible(false)}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: CC.text.secondary }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirmBtn, { opacity: editName.trim() && !saving ? 1 : 0.4 }]}
@@ -1033,7 +1037,7 @@ function ClubsTab() {
                 {saving ? (
                   <ActivityIndicator size="small" color={Colors.text.primary} />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Save</Text>
+                  <Text style={[styles.modalConfirmText, { color: CC.text.primary }]}>Save</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -1050,10 +1054,10 @@ function ClubsTab() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>
+            <Text style={[styles.modalTitle, { color: CC.text.primary }]}>
               ➕  Invite to {inviteClub?.name ?? 'Club'}
             </Text>
-            <Text style={styles.fieldLabel}>Player Number</Text>
+            <Text style={[styles.fieldLabel, { color: CC.text.secondary }]}>Player Number</Text>
             <TextInput
               style={styles.modalInput}
               value={invitePlayerNum}
@@ -1076,7 +1080,7 @@ function ClubsTab() {
                 style={styles.modalCancelBtn}
                 onPress={() => { setInviteModalVisible(false); setInviteFeedback(null); setInvitePlayerNum(''); }}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: CC.text.secondary }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalConfirmBtn, { opacity: invitePlayerNum.trim() && !inviting ? 1 : 0.4 }]}
@@ -1086,7 +1090,7 @@ function ClubsTab() {
                 {inviting ? (
                   <ActivityIndicator size="small" color={Colors.text.primary} />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Send Invite</Text>
+                  <Text style={[styles.modalConfirmText, { color: CC.text.primary }]}>Send Invite</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -1100,7 +1104,8 @@ function ClubsTab() {
 // ─── Find Friends Tab ─────────────────────────────────────────────────────────
 
 function FindFriendsTab() {
-  const { user, chatRooms, setChatRooms, addClubInvite } = useAppStore();
+  const { user, chatRooms, setChatRooms, addClubInvite, appColorMode } = useAppStore();
+  const FC = appColorMode === 'light' ? LightColors : Colors;
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -1195,11 +1200,11 @@ function FindFriendsTab() {
     <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={styles.searchRow}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: FC.bg.input, borderColor: FC.border.default, color: FC.text.primary }]}
           value={searchQuery}
           onChangeText={handleSearch}
           placeholder="Search by username or 8-digit account #"
-          placeholderTextColor={Colors.text.tertiary}
+          placeholderTextColor={FC.text.tertiary}
           clearButtonMode="while-editing"
         />
         {searching && (
@@ -1213,13 +1218,13 @@ function FindFriendsTab() {
 
       {searchResults.length > 0 && (
         <View>
-          <Text style={styles.sectionLabel}>Results</Text>
+          <Text style={[styles.sectionLabel, { color: FC.text.secondary }]}>Results</Text>
           {searchResults.map((u) => (
-            <View key={u.id} style={styles.userCard}>
+            <View key={u.id} style={[styles.userCard, { backgroundColor: FC.bg.secondary, borderColor: FC.border.default }]}>
               <InitialsAvatar name={u.displayName} />
               <View style={styles.userCardInfo}>
                 <View style={styles.userCardNameRow}>
-                  <Text style={styles.userDisplayName}>{u.displayName}</Text>
+                  <Text style={[styles.userDisplayName, { color: FC.text.primary }]}>{u.displayName}</Text>
                   <View
                     style={[
                       styles.levelBadge,
@@ -1231,8 +1236,8 @@ function FindFriendsTab() {
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.userUsername}>@{u.username}</Text>
-                <Text style={styles.userAccountNum}>#{u.accountNumber}</Text>
+                <Text style={[styles.userUsername, { color: FC.text.secondary }]}>@{u.username}</Text>
+                <Text style={[styles.userAccountNum, { color: FC.text.tertiary }]}>#{u.accountNumber}</Text>
               </View>
               <View style={{ gap: 6 }}>
                 <TouchableOpacity
@@ -1254,18 +1259,18 @@ function FindFriendsTab() {
       )}
 
       {searchQuery && !searching && searchResults.length === 0 && (
-        <Text style={styles.emptyText}>No users found.</Text>
+        <Text style={[styles.emptyText, { color: FC.text.tertiary }]}>No users found.</Text>
       )}
 
-      <Text style={[styles.sectionLabel, { marginTop: Spacing.lg }]}>
+      <Text style={[styles.sectionLabel, { marginTop: Spacing.lg, color: FC.text.secondary }]}>
         Pending Trade Proposals
       </Text>
       {proposals.length === 0 ? (
-        <Text style={styles.emptyText}>No pending proposals.</Text>
+        <Text style={[styles.emptyText, { color: FC.text.tertiary }]}>No pending proposals.</Text>
       ) : (
         proposals.map((proposal) => (
-          <View key={proposal.id} style={styles.proposalCard}>
-            <Text style={styles.proposalTitle}>
+          <View key={proposal.id} style={[styles.proposalCard, { backgroundColor: FC.bg.secondary, borderColor: FC.border.default }]}>
+            <Text style={[styles.proposalTitle, { color: FC.text.primary }]}>
               {proposal.type.toUpperCase()} {proposal.symbol}
             </Text>
             <View style={styles.proposalRow}>
@@ -1326,7 +1331,8 @@ function FindFriendsTab() {
 // ─── Virtual Trading Tab ──────────────────────────────────────────────────────
 
 function VirtualTradingTab() {
-  const { user, quotes } = useAppStore();
+  const { user, quotes, appColorMode } = useAppStore();
+  const VC = appColorMode === 'light' ? LightColors : Colors;
   const [accountNumber, setAccountNumber] = useState('');
   const [symbol, setSymbol] = useState('');
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
@@ -1400,12 +1406,12 @@ function VirtualTradingTab() {
       contentContainerStyle={{ paddingBottom: 32 }}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.sectionLabel}>Send a Trade Proposal</Text>
-      <Text style={styles.sectionSubLabel}>
+      <Text style={[styles.sectionLabel, { color: VC.text.secondary }]}>Send a Trade Proposal</Text>
+      <Text style={[styles.sectionSubLabel, { color: VC.text.tertiary }]}>
         Propose a virtual trade to a friend using their account number.
       </Text>
 
-      <Text style={styles.fieldLabel}>Friend's Account Number</Text>
+      <Text style={[styles.fieldLabel, { color: VC.text.secondary }]}>Friend's Account Number</Text>
       <TextInput
         style={styles.modalInput}
         value={accountNumber}
@@ -1416,7 +1422,7 @@ function VirtualTradingTab() {
         maxLength={8}
       />
 
-      <Text style={styles.fieldLabel}>Stock Symbol</Text>
+      <Text style={[styles.fieldLabel, { color: VC.text.secondary }]}>Stock Symbol</Text>
       <TextInput
         style={styles.modalInput}
         value={symbol}
@@ -1427,7 +1433,7 @@ function VirtualTradingTab() {
         maxLength={10}
       />
 
-      <Text style={styles.fieldLabel}>Trade Type</Text>
+      <Text style={[styles.fieldLabel, { color: VC.text.secondary }]}>Trade Type</Text>
       <View style={styles.toggleButtonRow}>
         <TouchableOpacity
           style={[
@@ -1469,7 +1475,7 @@ function VirtualTradingTab() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.fieldLabel}>Number of Shares</Text>
+      <Text style={[styles.fieldLabel, { color: VC.text.secondary }]}>Number of Shares</Text>
       <TextInput
         style={styles.modalInput}
         value={shares}
@@ -1482,11 +1488,11 @@ function VirtualTradingTab() {
       {symbol && currentPrice > 0 && (
         <View style={styles.priceDisplay}>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Current Price</Text>
-            <Text style={styles.priceValue}>{formatCurrency(currentPrice)}</Text>
+            <Text style={[styles.priceLabel, { color: VC.text.secondary }]}>Current Price</Text>
+            <Text style={[styles.priceValue, { color: VC.text.primary }]}>{formatCurrency(currentPrice)}</Text>
           </View>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Total Value</Text>
+            <Text style={[styles.priceLabel, { color: VC.text.secondary }]}>Total Value</Text>
             <Text style={[styles.priceValue, { color: Colors.brand.primary, fontWeight: FontWeight.bold }]}>
               {formatCurrency(totalValue)}
             </Text>
@@ -1510,7 +1516,7 @@ function VirtualTradingTab() {
         {sending ? (
           <ActivityIndicator color={Colors.text.primary} />
         ) : (
-          <Text style={styles.sendProposalBtnText}>Send Proposal</Text>
+          <Text style={[styles.sendProposalBtnText, { color: VC.text.primary }]}>Send Proposal</Text>
         )}
       </TouchableOpacity>
     </ScrollView>
@@ -1520,10 +1526,14 @@ function VirtualTradingTab() {
 // ─── Main Social Screen ───────────────────────────────────────────────────────
 
 export default function SocialScreen() {
-  const { appColorMode, appTabColors, isSidebarOpen, setSidebarOpen } = useAppStore();
+  const { appColorMode, appTabColors, isSidebarOpen, setSidebarOpen, appMode: socialAppMode } = useAppStore();
   const tabColor = appTabColors['social'] ?? '#EC4899';
   const isLight = appColorMode === 'light';
-  const screenBg = isLight ? '#FFF0F8' : '#8A1A55';
+  const C = isLight ? LightColors : Colors;
+  const screenBg = socialAppMode === 'adult' ? (isLight ? '#FFFFFF' : '#000000') : isLight ? '#FFF0F8' : '#8A1A55';
+  const adultGrad = socialAppMode === 'adult';
+  const gc = (a: string, b: string, c: string) => adultGrad ? ['transparent','transparent','transparent'] as any : [a,b,c] as any;
+  const gcFull = (a: string, b: string, c: string, d: string) => adultGrad ? ['transparent','transparent','transparent',screenBg] as any : [a,b,c,d] as any;
   const [activeTab, setActiveTab] = useState<SocialTab>('messages');
 
   const tabs: { key: SocialTab; label: string }[] = [
@@ -1551,19 +1561,19 @@ export default function SocialScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: screenBg }]} edges={['top']}>
       {/* Full-screen colour wash — top */}
       <LinearGradient
-        colors={[`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg] as any}
+        colors={gcFull(`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       {/* Full-screen wash — bottom */}
       <LinearGradient
-        colors={['transparent', `${tabColor}30`, `${tabColor}40`] as any}
+        colors={gc('transparent', `${tabColor}30`, `${tabColor}40`)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       {/* Side glow */}
       <LinearGradient
-        colors={[`${tabColor}28`, 'transparent', `${tabColor}28`] as any}
+        colors={gc(`${tabColor}28`, 'transparent', `${tabColor}28`)}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
@@ -1572,7 +1582,7 @@ export default function SocialScreen() {
       <AppHeader title="Social" />
 
       {/* Tab Bar */}
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { backgroundColor: isLight ? 'rgba(255,240,248,0.95)' : 'rgba(61, 0, 37, 0.85)', borderBottomColor: isLight ? 'rgba(180,0,100,0.15)' : 'rgba(180, 0, 100, 0.3)' }]}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -1582,6 +1592,7 @@ export default function SocialScreen() {
             <Text
               style={[
                 styles.tabItemText,
+                { color: C.text.tertiary },
                 activeTab === tab.key && styles.tabItemTextActive,
               ]}
             >

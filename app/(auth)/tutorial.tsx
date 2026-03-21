@@ -6,6 +6,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
+import { useAppStore } from '../../src/store/useAppStore';
 
 const { width } = Dimensions.get('window');
 
@@ -121,10 +122,14 @@ const SLIDES = [
   },
 ];
 
+const IS_LAST = (index: number) => index === SLIDES.length - 1;
+
 export default function TutorialScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedMode, setSelectedMode] = useState<'kids' | 'adult' | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const { setAppMode } = useAppStore();
 
   const goTo = (index: number) => {
     setCurrentSlide(index);
@@ -137,9 +142,11 @@ export default function TutorialScreen() {
   };
 
   const next = () => {
-    if (currentSlide < SLIDES.length - 1) {
+    if (!IS_LAST(currentSlide)) {
       goTo(currentSlide + 1);
     } else {
+      const mode = selectedMode ?? 'kids';
+      setAppMode(mode);
       router.replace('/(auth)/setup');
     }
   };
@@ -148,6 +155,8 @@ export default function TutorialScreen() {
 
   const slide = SLIDES[currentSlide];
   const theme = SLIDE_COLORS[currentSlide];
+  const isLastSlide = IS_LAST(currentSlide);
+  const canProceed = !isLastSlide || selectedMode !== null;
 
   return (
     <View style={styles.container}>
@@ -211,6 +220,86 @@ export default function TutorialScreen() {
           <Text style={styles.factLabel}>✨ Did You Know?</Text>
           <Text style={[styles.factText, { color: theme.accent }]}>{slide.fact}</Text>
         </LinearGradient>
+
+        {/* ── Version picker — last slide only ─────────────────── */}
+        {isLastSlide && (
+          <View style={styles.modeSection}>
+            <Text style={styles.modeSectionTitle}>Choose Your Experience</Text>
+            <Text style={styles.modeSectionSubtitle}>
+              Pick the version that suits you best. You can change this later in Settings.
+            </Text>
+
+            {/* Kids Mode card */}
+            <TouchableOpacity
+              style={[
+                styles.modeCard,
+                selectedMode === 'kids' && styles.modeCardKidsSelected,
+              ]}
+              onPress={() => setSelectedMode('kids')}
+              activeOpacity={0.82}
+            >
+              <View style={styles.modeCardHeader}>
+                <View style={[styles.modeIconBubble, { backgroundColor: 'rgba(245,197,24,0.18)' }]}>
+                  <Text style={styles.modeCardIcon}>🎮</Text>
+                </View>
+                <View style={styles.modeCardTitleRow}>
+                  <Text style={[styles.modeCardTitle, { color: '#F5C518' }]}>Kids Mode</Text>
+                  <Text style={styles.modeCardAge}>Ages 8 – 18</Text>
+                </View>
+                <View style={[styles.modeRadio, selectedMode === 'kids' && styles.modeRadioKidsActive]}>
+                  {selectedMode === 'kids' && <View style={[styles.modeRadioDot, { backgroundColor: '#F5C518' }]} />}
+                </View>
+              </View>
+              <Text style={styles.modeCardDesc}>
+                The full CapitalQuest experience! Includes:
+              </Text>
+              <View style={styles.modeFeatureList}>
+                <Text style={styles.modeFeatureItem}>🎨  Unlock and equip custom avatars</Text>
+                <Text style={styles.modeFeatureItem}>🐾  Collect and level up rare pets</Text>
+                <Text style={styles.modeFeatureItem}>🏆  Trophy Road with milestone rewards</Text>
+                <Text style={styles.modeFeatureItem}>📈  Real-time stock trading simulation</Text>
+                <Text style={styles.modeFeatureItem}>🥇  Global leaderboard &amp; achievements</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Adult Mode card */}
+            <TouchableOpacity
+              style={[
+                styles.modeCard,
+                selectedMode === 'adult' && styles.modeCardAdultSelected,
+              ]}
+              onPress={() => setSelectedMode('adult')}
+              activeOpacity={0.82}
+            >
+              <View style={styles.modeCardHeader}>
+                <View style={[styles.modeIconBubble, { backgroundColor: 'rgba(0,179,230,0.18)' }]}>
+                  <Text style={styles.modeCardIcon}>💼</Text>
+                </View>
+                <View style={styles.modeCardTitleRow}>
+                  <Text style={[styles.modeCardTitle, { color: Colors.brand.primary }]}>Adult Mode</Text>
+                  <Text style={styles.modeCardAge}>Classic &amp; Focused</Text>
+                </View>
+                <View style={[styles.modeRadio, selectedMode === 'adult' && styles.modeRadioAdultActive]}>
+                  {selectedMode === 'adult' && <View style={[styles.modeRadioDot, { backgroundColor: Colors.brand.primary }]} />}
+                </View>
+              </View>
+              <Text style={styles.modeCardDesc}>
+                A clean, distraction-free trading experience. Includes:
+              </Text>
+              <View style={styles.modeFeatureList}>
+                <Text style={styles.modeFeatureItem}>📈  Real-time stock trading simulation</Text>
+                <Text style={styles.modeFeatureItem}>💼  Full portfolio &amp; analytics tools</Text>
+                <Text style={styles.modeFeatureItem}>🥇  Global leaderboard &amp; achievements</Text>
+                <Text style={styles.modeFeatureItem}>🤖  AI market advisor</Text>
+                <Text style={[styles.modeFeatureItem, styles.modeFeatureOff]}>✕  No avatars, pets, or trophy road</Text>
+              </View>
+            </TouchableOpacity>
+
+            {!selectedMode && (
+              <Text style={styles.modeHint}>Please select a version to continue</Text>
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {/* ── Navigation dots ──────────────────────────────────────── */}
@@ -228,15 +317,19 @@ export default function TutorialScreen() {
       </View>
 
       {/* ── Next button ──────────────────────────────────────────── */}
-      <TouchableOpacity style={styles.nextButton} onPress={next} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={[styles.nextButton, !canProceed && styles.nextButtonDisabled]}
+        onPress={canProceed ? next : undefined}
+        activeOpacity={canProceed ? 0.85 : 1}
+      >
         <LinearGradient
-          colors={theme.banner}
+          colors={canProceed ? theme.banner : ['#2A2F3E', '#2A2F3E']}
           style={styles.nextGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
-          <Text style={styles.nextText}>
-            {currentSlide === SLIDES.length - 1 ? "Let's Trade! 🚀" : 'Next  →'}
+          <Text style={[styles.nextText, !canProceed && styles.nextTextDisabled]}>
+            {isLastSlide ? "Let's Trade! 🚀" : 'Next  →'}
           </Text>
         </LinearGradient>
       </TouchableOpacity>
@@ -358,6 +451,101 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
   },
 
+  // ── Version picker ────────────────────────────────────────────────
+  modeSection: {
+    marginTop: 20,
+    gap: 12,
+  },
+  modeSectionTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.text.primary,
+    textAlign: 'center',
+  },
+  modeSectionSubtitle: {
+    fontSize: FontSize.sm,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  modeCard: {
+    backgroundColor: Colors.bg.secondary,
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 2,
+    borderColor: Colors.bg.tertiary,
+    gap: 10,
+  },
+  modeCardKidsSelected: {
+    borderColor: '#F5C518',
+    backgroundColor: 'rgba(245,197,24,0.07)',
+  },
+  modeCardAdultSelected: {
+    borderColor: Colors.brand.primary,
+    backgroundColor: 'rgba(0,179,230,0.07)',
+  },
+  modeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  modeIconBubble: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeCardIcon: { fontSize: 26 },
+  modeCardTitleRow: { flex: 1 },
+  modeCardTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.extrabold,
+  },
+  modeCardAge: {
+    fontSize: FontSize.xs,
+    color: Colors.text.tertiary,
+    marginTop: 2,
+  },
+  modeRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: Colors.bg.tertiary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeRadioKidsActive: { borderColor: '#F5C518' },
+  modeRadioAdultActive: { borderColor: Colors.brand.primary },
+  modeRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  modeCardDesc: {
+    fontSize: FontSize.sm,
+    color: Colors.text.secondary,
+    lineHeight: 19,
+  },
+  modeFeatureList: { gap: 5 },
+  modeFeatureItem: {
+    fontSize: FontSize.sm,
+    color: Colors.text.primary,
+    lineHeight: 20,
+  },
+  modeFeatureOff: {
+    color: Colors.text.tertiary,
+    textDecorationLine: 'line-through',
+  },
+  modeHint: {
+    fontSize: FontSize.xs,
+    color: Colors.market.loss,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+
   // ── Dots ─────────────────────────────────────────────────────────
   dots: {
     flexDirection: 'row',
@@ -388,6 +576,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  nextButtonDisabled: {
+    opacity: 0.5,
+  },
   nextGradient: {
     paddingVertical: 17,
     alignItems: 'center',
@@ -397,5 +588,8 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.extrabold,
     color: '#fff',
     letterSpacing: 0.5,
+  },
+  nextTextDisabled: {
+    color: Colors.text.tertiary,
   },
 });

@@ -20,6 +20,7 @@ import { formatCurrency, formatPercent, formatRelativeTime } from '../../src/uti
 import { searchStocks, getQuotes, type SearchResult } from '../../src/services/stockApi';
 import {
   Colors,
+  LightColors,
   FontSize,
   FontWeight,
   Spacing,
@@ -113,7 +114,11 @@ type MoverTab = 'gainers' | 'losers' | 'active';
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const { user, portfolio, quotes, watchlist, notifications, setSidebarOpen, setQuote, isSidebarOpen, newsLastRead } = useAppStore();
+  const { user, portfolio, quotes, watchlist, notifications, setSidebarOpen, setQuote, isSidebarOpen, newsLastRead, appMode, appColorMode } = useAppStore();
+  const isAdult = appMode === 'adult';
+  const adultBg = appColorMode === 'light' ? '#FFFFFF' : '#000000';
+  const isLight = appColorMode === 'light';
+  const C = isLight ? LightColors : Colors;
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -197,8 +202,8 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.bg.primary} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isAdult ? adultBg : C.bg.primary }]}>
+      <StatusBar barStyle="light-content" backgroundColor={isAdult ? adultBg : C.bg.primary} />
 
       <AppHeader title="Markets" />
 
@@ -209,7 +214,7 @@ export default function HomeScreen() {
       >
         {/* Market Indices Row */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Markets</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Markets</Text>
         </View>
         <ScrollView
           horizontal
@@ -224,11 +229,11 @@ export default function HomeScreen() {
             return (
               <TouchableOpacity
                 key={index.symbol}
-                style={styles.indexCard}
+                style={[styles.indexCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}
                 onPress={() => handleStockPress(index.symbol)}
               >
-                <Text style={styles.indexName}>{index.name}</Text>
-                <Text style={styles.indexPrice}>
+                <Text style={[styles.indexName, { color: C.text.tertiary }]}>{index.name}</Text>
+                <Text style={[styles.indexPrice, { color: C.text.primary }]}>
                   {price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
                 <Text style={[styles.indexChange, { color: up ? Colors.market.gain : Colors.market.loss }]}>
@@ -241,12 +246,12 @@ export default function HomeScreen() {
 
         {/* Search Bar */}
         <View style={styles.searchWrapper}>
-          <View style={styles.searchContainer}>
+          <View style={[styles.searchContainer, { backgroundColor: C.bg.input, borderColor: C.border.default }]}>
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: C.text.primary }]}
               placeholder="Search stocks, ETFs — e.g. AAPL, Tesla..."
-              placeholderTextColor={Colors.text.tertiary}
+              placeholderTextColor={C.text.tertiary}
               value={searchQuery}
               onChangeText={handleSearchChange}
               returnKeyType="search"
@@ -271,19 +276,19 @@ export default function HomeScreen() {
 
           {/* Live search dropdown */}
           {showSearchDropdown && (
-            <View style={styles.searchDropdown}>
+            <View style={[styles.searchDropdown, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
               {searchResults.length === 0 && !isSearching ? (
-                <Text style={styles.noResultsText}>No results — try a ticker like AAPL</Text>
+                <Text style={[styles.noResultsText, { color: C.text.tertiary }]}>No results — try a ticker like AAPL</Text>
               ) : (
                 searchResults.map((item) => (
                   <TouchableOpacity
                     key={item.symbol}
-                    style={styles.searchResultRow}
+                    style={[styles.searchResultRow, { borderBottomColor: C.border.subtle }]}
                     onPress={() => handleStockPress(item.symbol)}
                   >
                     <View style={styles.searchResultLeft}>
-                      <Text style={styles.searchResultSymbol}>{item.displaySymbol || item.symbol}</Text>
-                      <Text style={styles.searchResultName} numberOfLines={1}>{item.name}</Text>
+                      <Text style={[styles.searchResultSymbol, { color: C.text.primary }]}>{item.displaySymbol || item.symbol}</Text>
+                      <Text style={[styles.searchResultName, { color: C.text.tertiary }]} numberOfLines={1}>{item.name}</Text>
                     </View>
                     <Text style={styles.searchResultType}>{item.type}</Text>
                   </TouchableOpacity>
@@ -295,18 +300,18 @@ export default function HomeScreen() {
 
         {/* Market Movers */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Market Movers</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Market Movers</Text>
         </View>
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
           {/* Tab row */}
-          <View style={styles.moverTabs}>
+          <View style={[styles.moverTabs, { borderBottomColor: C.border.default }]}>
             {(['gainers', 'losers', 'active'] as MoverTab[]).map(tab => (
               <TouchableOpacity
                 key={tab}
                 style={[styles.moverTab, moverTab === tab && styles.moverTabActive]}
                 onPress={() => setMoverTab(tab)}
               >
-                <Text style={[styles.moverTabText, moverTab === tab && styles.moverTabTextActive]}>
+                <Text style={[styles.moverTabText, { color: C.text.tertiary }, moverTab === tab && styles.moverTabTextActive]}>
                   {tab === 'gainers' ? 'Top Gainers' : tab === 'losers' ? 'Top Losers' : 'Most Active'}
                 </Text>
               </TouchableOpacity>
@@ -322,25 +327,25 @@ export default function HomeScreen() {
             return (
               <TouchableOpacity
                 key={stock.symbol}
-                style={[styles.moverRow, i < currentMovers.length - 1 && styles.moverRowBorder]}
+                style={[styles.moverRow, i < currentMovers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border.subtle }]}
                 onPress={() => handleStockPress(stock.symbol)}
               >
                 <View style={styles.moverLeft}>
-                  <View style={styles.moverRankBadge}>
-                    <Text style={styles.moverRank}>{i + 1}</Text>
+                  <View style={[styles.moverRankBadge, { backgroundColor: C.bg.tertiary }]}>
+                    <Text style={[styles.moverRank, { color: C.text.tertiary }]}>{i + 1}</Text>
                   </View>
                   <View>
-                    <Text style={styles.moverSymbol}>{stock.symbol}</Text>
-                    <Text style={styles.moverName} numberOfLines={1}>
+                    <Text style={[styles.moverSymbol, { color: C.text.primary }]}>{stock.symbol}</Text>
+                    <Text style={[styles.moverName, { color: C.text.tertiary }]} numberOfLines={1}>
                       {stock.name}
                     </Text>
                     {'volume' in stock && (
-                      <Text style={styles.moverVolume}>Vol: {(stock as typeof MOCK_MOVERS.active[0]).volume}</Text>
+                      <Text style={[styles.moverVolume, { color: C.text.tertiary }]}>Vol: {(stock as typeof MOCK_MOVERS.active[0]).volume}</Text>
                     )}
                   </View>
                 </View>
                 <View style={styles.moverRight}>
-                  <Text style={styles.moverPrice}>{formatCurrency(price)}</Text>
+                  <Text style={[styles.moverPrice, { color: C.text.primary }]}>{formatCurrency(price)}</Text>
                   <View style={[styles.moverBadge, { backgroundColor: up ? Colors.market.gainBg : Colors.market.lossBg }]}>
                     <Text style={[styles.moverChange, { color: up ? Colors.market.gain : Colors.market.loss }]}>
                       {up ? '▲' : '▼'} {formatPercent(Math.abs(changePercent), false)}
@@ -354,38 +359,38 @@ export default function HomeScreen() {
 
         {/* Watchlist */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Watchlist</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Watchlist</Text>
           <TouchableOpacity>
             <Text style={styles.sectionAction}>Manage</Text>
           </TouchableOpacity>
         </View>
 
         {watchlistData.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No stocks in your watchlist.</Text>
-            <Text style={styles.emptySubtext}>Tap Manage to add stocks.</Text>
+          <View style={[styles.emptyCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.emptyText, { color: C.text.secondary }]}>No stocks in your watchlist.</Text>
+            <Text style={[styles.emptySubtext, { color: C.text.tertiary }]}>Tap Manage to add stocks.</Text>
           </View>
         ) : (
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
             {watchlistData.map((item, i) => {
               const up = item.changePercent >= 0;
               return (
                 <TouchableOpacity
                   key={item.symbol}
-                  style={[styles.watchlistRow, i < watchlistData.length - 1 && styles.watchlistRowBorder]}
+                  style={[styles.watchlistRow, i < watchlistData.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border.subtle }]}
                   onPress={() => handleStockPress(item.symbol)}
                 >
                   <View style={styles.watchlistSymbolContainer}>
-                    <View style={styles.watchlistAvatar}>
+                    <View style={[styles.watchlistAvatar, { backgroundColor: C.bg.input, borderColor: C.border.default }]}>
                       <Text style={styles.watchlistAvatarText}>{item.symbol.charAt(0)}</Text>
                     </View>
                     <View>
-                      <Text style={styles.watchlistSymbol}>{item.symbol}</Text>
-                      <Text style={styles.watchlistSubtext}>Tap to trade</Text>
+                      <Text style={[styles.watchlistSymbol, { color: C.text.primary }]}>{item.symbol}</Text>
+                      <Text style={[styles.watchlistSubtext, { color: C.text.tertiary }]}>Tap to trade</Text>
                     </View>
                   </View>
                   <View style={styles.watchlistPriceContainer}>
-                    <Text style={styles.watchlistPrice}>
+                    <Text style={[styles.watchlistPrice, { color: C.text.primary }]}>
                       {item.price > 0 ? formatCurrency(item.price) : '—'}
                     </Text>
                     {item.price > 0 ? (
@@ -393,7 +398,7 @@ export default function HomeScreen() {
                         {up ? '+' : ''}{formatPercent(item.changePercent)}
                       </Text>
                     ) : (
-                      <Text style={styles.watchlistSubtext}>Loading…</Text>
+                      <Text style={[styles.watchlistSubtext, { color: C.text.tertiary }]}>Loading…</Text>
                     )}
                   </View>
                 </TouchableOpacity>
@@ -404,35 +409,35 @@ export default function HomeScreen() {
 
         {/* News */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Market News</Text>
+          <Text style={[styles.sectionTitle, { color: C.text.primary }]}>Market News</Text>
           <TouchableOpacity>
             <Text style={styles.sectionAction}>See All</Text>
           </TouchableOpacity>
         </View>
 
         {MOCK_NEWS.map((article, i) => (
-          <TouchableOpacity key={article.id} style={styles.newsCard} activeOpacity={0.8}>
+          <TouchableOpacity key={article.id} style={[styles.newsCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]} activeOpacity={0.8}>
             <View style={styles.newsContent}>
               <View style={styles.newsMeta}>
                 <Text style={styles.newsSource}>{article.source}</Text>
-                <Text style={styles.newsDot}>·</Text>
-                <Text style={styles.newsTime}>{formatRelativeTime(article.publishedAt)}</Text>
+                <Text style={[styles.newsDot, { color: C.text.tertiary }]}>·</Text>
+                <Text style={[styles.newsTime, { color: C.text.tertiary }]}>{formatRelativeTime(article.publishedAt)}</Text>
               </View>
-              <Text style={styles.newsHeadline} numberOfLines={2}>
+              <Text style={[styles.newsHeadline, { color: C.text.primary }]} numberOfLines={2}>
                 {article.headline}
               </Text>
               {article.relatedSymbols.length > 0 && (
                 <View style={styles.newsTags}>
                   {article.relatedSymbols.slice(0, 3).map(sym => (
-                    <View key={sym} style={styles.newsTag}>
-                      <Text style={styles.newsTagText}>{sym}</Text>
+                    <View key={sym} style={[styles.newsTag, { backgroundColor: C.bg.input, borderColor: C.border.default }]}>
+                      <Text style={[styles.newsTagText, { color: C.text.secondary }]}>{sym}</Text>
                     </View>
                   ))}
                 </View>
               )}
             </View>
             <View style={styles.newsArrow}>
-              <Text style={styles.newsArrowText}>›</Text>
+              <Text style={[styles.newsArrowText, { color: C.text.tertiary }]}>›</Text>
             </View>
           </TouchableOpacity>
         ))}

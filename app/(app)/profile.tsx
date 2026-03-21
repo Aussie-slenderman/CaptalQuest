@@ -12,7 +12,7 @@ import { TROPHY_REWARDS, getCurrentAvatar, getCurrentPet, type TrophyReward } fr
 import { SHOP_ITEMS, TIER_COLORS, TIER_LABELS, blingAtMilestone, type ShopItem, type PetAbility } from '../../src/constants/shopItems';
 import AppHeader from '../../src/components/AppHeader';
 import Sidebar from '../../src/components/Sidebar';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
+import { Colors, LightColors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 import { formatCurrency, formatPercent, formatAccountNumber } from '../../src/utils/formatters';
 
 export default function ProfileScreen() {
@@ -26,10 +26,15 @@ export default function ProfileScreen() {
     petAbilityLastUsed,    setPetAbilityLastUsed,
     appColorMode, appTabColors,
     isSidebarOpen, setSidebarOpen,
+  appMode: profileAppMode,
   } = useAppStore();
   const tabColor = appTabColors['profile'] ?? '#7C3AED';
   const isLight = appColorMode === 'light';
-  const screenBg = isLight ? '#F5F0FF' : '#4A1898';
+  const C = isLight ? LightColors : Colors;
+  const screenBg = profileAppMode === 'adult' ? (isLight ? '#FFFFFF' : '#000000') : isLight ? '#F5F0FF' : '#4A1898';
+  const adultGrad = profileAppMode === 'adult';
+  const gc = (a: string, b: string, c: string) => adultGrad ? ['transparent','transparent','transparent'] as any : [a,b,c] as any;
+  const gcFull = (a: string, b: string, c: string, d: string) => adultGrad ? ['transparent','transparent','transparent',screenBg] as any : [a,b,c,d] as any;
   const [isDark] = useState(true);
   const [wardrobeOpen, setWardrobeOpen] = useState(false);
   const [signOutVisible, setSignOutVisible] = useState(false);
@@ -140,17 +145,17 @@ export default function ProfileScreen() {
     <View style={[styles.rootContainer, { backgroundColor: screenBg }]}>
       {/* Full-screen colour wash */}
       <LinearGradient
-        colors={[`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg] as any}
+        colors={gcFull(`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['transparent', `${tabColor}30`, `${tabColor}40`] as any}
+        colors={gc('transparent', `${tabColor}30`, `${tabColor}40`)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={[`${tabColor}28`, 'transparent', `${tabColor}28`] as any}
+        colors={gc(`${tabColor}28`, 'transparent', `${tabColor}28`)}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
@@ -160,7 +165,7 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header */}
       <LinearGradient
-        colors={[`${tabColor}CC`, `${tabColor}88`, `${tabColor}22`, screenBg] as any}
+        colors={gcFull(`${tabColor}CC`, `${tabColor}88`, `${tabColor}22`, screenBg)}
         style={styles.headerGradient}
       >
         {/* Bling badge top-right */}
@@ -182,10 +187,10 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <Text style={styles.displayName}>{user.displayName}</Text>
-        <Text style={styles.username}>@{user.username}</Text>
-        <Text style={styles.avatarNameLabel}>{displayAvatarEmoji} {displayAvatarName}</Text>
-        <Text style={styles.accountNumber}>{formatAccountNumber(user.accountNumber)}</Text>
+        <Text style={[styles.displayName, { color: C.text.primary }]}>{user.displayName}</Text>
+        <Text style={[styles.username, { color: C.text.secondary }]}>@{user.username}</Text>
+        <Text style={[styles.avatarNameLabel, { color: C.text.secondary }]}>{displayAvatarEmoji} {displayAvatarName}</Text>
+        <Text style={[styles.accountNumber, { color: C.text.tertiary }]}>{formatAccountNumber(user.accountNumber)}</Text>
 
         {/* Wardrobe button */}
         <TouchableOpacity
@@ -198,8 +203,8 @@ export default function ProfileScreen() {
         {/* XP Bar */}
         <View style={styles.xpContainer}>
           <View style={styles.xpLabelRow}>
-            <Text style={styles.xpLabel}>{xpInfo.current.title}</Text>
-            <Text style={styles.xpValue}>{user.xp} XP</Text>
+            <Text style={[styles.xpLabel, { color: C.text.secondary }]}>{xpInfo.current.title}</Text>
+            <Text style={[styles.xpValue, { color: C.text.secondary }]}>{user.xp} XP</Text>
           </View>
           <View style={styles.xpTrack}>
             <LinearGradient
@@ -210,7 +215,7 @@ export default function ProfileScreen() {
             />
           </View>
           {xpInfo.nextLevel && (
-            <Text style={styles.xpNext}>
+            <Text style={[styles.xpNext, { color: C.text.tertiary }]}>
               {xpInfo.xpInLevel} / {xpInfo.xpNeeded} XP to {xpInfo.nextLevel.title}
             </Text>
           )}
@@ -236,7 +241,7 @@ export default function ProfileScreen() {
               </TouchableOpacity>
               {isPassiveAbility ? (
                 <View style={[styles.abilityBtn, abilityActive && styles.abilityBtnActive]}>
-                  <Text style={[styles.abilityBtnText, !abilityActive && styles.abilityBtnTextDim]}>
+                  <Text style={[styles.abilityBtnText, !abilityActive && { color: C.text.tertiary }]}>
                     {abilityActive ? '🍀 Active' : rolledToday ? '🎲 Rolled' : '🎲 Auto'}
                   </Text>
                 </View>
@@ -251,7 +256,7 @@ export default function ProfileScreen() {
                 >
                   <Text style={[
                     styles.abilityBtnText,
-                    (abilityActive || abilityOnCooldown) && styles.abilityBtnTextDim,
+                    (abilityActive || abilityOnCooldown) && { color: C.text.tertiary },
                   ]}>
                     {abilityActive ? '⚡ Active' : abilityOnCooldown ? '⏳' : 'Activate'}
                   </Text>
@@ -261,30 +266,30 @@ export default function ProfileScreen() {
           </View>
           {abilityActive && (
             <View style={styles.abilityTimerRow}>
-              <Text style={styles.abilityTimerLabel}>⏱ Active for</Text>
+              <Text style={[styles.abilityTimerLabel, { color: C.text.secondary }]}>⏱ Active for</Text>
               <Text style={styles.abilityTimerValue}>{fmtDuration(activeRemainingMs)}</Text>
             </View>
           )}
           {abilityOnCooldown && (
             <View style={styles.abilityTimerRow}>
-              <Text style={styles.abilityTimerLabel}>🔒 Ready in</Text>
+              <Text style={[styles.abilityTimerLabel, { color: C.text.secondary }]}>🔒 Ready in</Text>
               <Text style={styles.abilityTimerValue}>{fmtDuration(cooldownRemainingMs)}</Text>
             </View>
           )}
           {isPassiveAbility ? (
             abilityActive ? null : rolledToday ? (
               <View style={styles.abilityTimerRow}>
-                <Text style={styles.abilityTimerLabel}>⏰ Next roll in</Text>
+                <Text style={[styles.abilityTimerLabel, { color: C.text.secondary }]}>⏰ Next roll in</Text>
                 <Text style={styles.abilityTimerValue}>{fmtDuration(nextRollMs)}</Text>
               </View>
             ) : (
-              <Text style={styles.abilityCooldownHint}>
+              <Text style={[styles.abilityCooldownHint, { color: C.text.tertiary }]}>
                 Auto-rolls on your next trade · 5% chance to 2× earnings
               </Text>
             )
           ) : (
             !abilityActive && !abilityOnCooldown && (
-              <Text style={styles.abilityCooldownHint}>
+              <Text style={[styles.abilityCooldownHint, { color: C.text.tertiary }]}>
                 Cooldown: {currentAbility.cooldownLabel} · Duration: {currentAbility.durationLabel}
               </Text>
             )
@@ -323,7 +328,7 @@ export default function ProfileScreen() {
 
                 {/* Description */}
                 <View style={styles.abilityModalDescBox}>
-                  <Text style={styles.abilityModalDescText}>{currentAbility.description}</Text>
+                  <Text style={[styles.abilityModalDescText, { color: C.text.primary }]}>{currentAbility.description}</Text>
                 </View>
 
                 {/* Stats grid */}
@@ -332,22 +337,22 @@ export default function ProfileScreen() {
                     <>
                       <View style={styles.abilityModalStat}>
                         <Text style={styles.abilityModalStatIcon}>⏱</Text>
-                        <Text style={styles.abilityModalStatLabel}>Duration</Text>
-                        <Text style={styles.abilityModalStatValue}>{currentAbility.durationLabel}</Text>
+                        <Text style={[styles.abilityModalStatLabel, { color: C.text.tertiary }]}>Duration</Text>
+                        <Text style={[styles.abilityModalStatValue, { color: C.text.primary }]}>{currentAbility.durationLabel}</Text>
                       </View>
                       <View style={styles.abilityModalStatDivider} />
                       <View style={styles.abilityModalStat}>
                         <Text style={styles.abilityModalStatIcon}>🔄</Text>
-                        <Text style={styles.abilityModalStatLabel}>Cooldown</Text>
-                        <Text style={styles.abilityModalStatValue}>{currentAbility.cooldownLabel}</Text>
+                        <Text style={[styles.abilityModalStatLabel, { color: C.text.tertiary }]}>Cooldown</Text>
+                        <Text style={[styles.abilityModalStatValue, { color: C.text.primary }]}>{currentAbility.cooldownLabel}</Text>
                       </View>
                     </>
                   )}
                   {isPassiveAbility && (
                     <View style={styles.abilityModalStat}>
                       <Text style={styles.abilityModalStatIcon}>🎲</Text>
-                      <Text style={styles.abilityModalStatLabel}>Type</Text>
-                      <Text style={styles.abilityModalStatValue}>Passive · Auto-rolls on trade</Text>
+                      <Text style={[styles.abilityModalStatLabel, { color: C.text.tertiary }]}>Type</Text>
+                      <Text style={[styles.abilityModalStatValue, { color: C.text.primary }]}>Passive · Auto-rolls on trade</Text>
                     </View>
                   )}
                 </View>
@@ -358,7 +363,7 @@ export default function ProfileScreen() {
                   abilityActive && styles.abilityModalStatusActive,
                   abilityOnCooldown && styles.abilityModalStatusCooldown,
                 ]}>
-                  <Text style={styles.abilityModalStatusText}>
+                  <Text style={[styles.abilityModalStatusText, { color: C.text.primary }]}>
                     {abilityActive
                       ? `⚡ Active · ${fmtDuration(activeRemainingMs)} remaining`
                       : abilityOnCooldown
@@ -432,14 +437,14 @@ export default function ProfileScreen() {
           return (
             <View
               key={ach.id}
-              style={[styles.achievementRow, !unlocked && styles.achievementRowLocked]}
+              style={[styles.achievementRow, { backgroundColor: C.bg.secondary, borderColor: C.border.default }, !unlocked && styles.achievementRowLocked]}
             >
-              <View style={[styles.achIconWrapper, { backgroundColor: unlocked ? `${Colors.brand.gold}22` : `${Colors.bg.tertiary}88` }]}>
+              <View style={[styles.achIconWrapper, { backgroundColor: unlocked ? `${Colors.brand.gold}22` : `${C.bg.tertiary}88` }]}>
                 <Text style={[styles.achievementIcon, !unlocked && { opacity: 0.4 }]}>{ach.icon}</Text>
               </View>
               <View style={styles.achBody}>
                 <View style={styles.achTitleRow}>
-                  <Text style={[styles.achievementTitle, !unlocked && styles.lockedText]}>
+                  <Text style={[styles.achievementTitle, { color: C.text.primary }, !unlocked && styles.lockedText]}>
                     {ach.title}
                   </Text>
                   {unlocked
@@ -448,8 +453,8 @@ export default function ProfileScreen() {
                   }
                 </View>
                 {unlocked
-                  ? <Text style={styles.achDescription}>{ach.description}</Text>
-                  : <Text style={styles.achRequirement}>{ach.requirement ?? ach.description}</Text>
+                  ? <Text style={[styles.achDescription, { color: C.text.secondary }]}>{ach.description}</Text>
+                  : <Text style={[styles.achRequirement, { color: C.text.tertiary }]}>{ach.requirement ?? ach.description}</Text>
                 }
               </View>
               {!unlocked && <Text style={styles.lockIcon}>🔒</Text>}
@@ -471,6 +476,7 @@ export default function ProfileScreen() {
               key={lvl.level}
               style={[
                 styles.levelRow,
+                { backgroundColor: C.bg.secondary, borderColor: C.border.default },
                 isCurrentLevel && { borderColor: `${lvl.color}88`, backgroundColor: `${lvl.color}0D` },
               ]}
             >
@@ -478,10 +484,10 @@ export default function ProfileScreen() {
                 <Text style={styles.levelIconText}>{lvl.icon}</Text>
               </View>
               <View style={styles.levelBody}>
-                <Text style={[styles.levelTitle, !isUnlocked && styles.lockedText]}>
+                <Text style={[styles.levelTitle, { color: C.text.primary }, !isUnlocked && styles.lockedText]}>
                   {lvl.title}
                 </Text>
-                <Text style={styles.levelSubtitle}>
+                <Text style={[styles.levelSubtitle, { color: C.text.tertiary }]}>
                   {lvl.xpRequired === 0 ? 'Starting level' : `${lvl.xpRequired} XP · +${gainPctForLevel}% portfolio`}
                 </Text>
               </View>
@@ -506,7 +512,7 @@ export default function ProfileScreen() {
 
       {/* Settings */}
       <SectionHeader title="Settings" icon="⚙️" />
-      <View style={styles.settingsContainer}>
+      <View style={[styles.settingsContainer, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
         <SettingsRow
           label="Dark Mode"
           right={<Switch value={isDark} trackColor={{ true: Colors.brand.primary }} thumbColor="#fff" />}
@@ -517,11 +523,11 @@ export default function ProfileScreen() {
         />
         <SettingsRow
           label="Country"
-          right={<Text style={styles.settingsValue}>{user.country}</Text>}
+          right={<Text style={[styles.settingsValue, { color: C.text.secondary }]}>{user.country}</Text>}
         />
         <SettingsRow
           label="Account Number"
-          right={<Text style={styles.settingsValue}>{formatAccountNumber(user.accountNumber)}</Text>}
+          right={<Text style={[styles.settingsValue, { color: C.text.secondary }]}>{formatAccountNumber(user.accountNumber)}</Text>}
         />
       </View>
 
@@ -535,7 +541,7 @@ export default function ProfileScreen() {
         <Text style={styles.deleteAccountText}>Delete Account</Text>
       </TouchableOpacity>
 
-      <Text style={styles.version}>CapitalQuest v1.0.0 · Virtual trading only · No real money involved</Text>
+      <Text style={[styles.version, { color: C.text.tertiary }]}>CapitalQuest v1.0.0 · Virtual trading only · No real money involved</Text>
     </ScrollView>
 
     {/* ── Wardrobe Modal ── */}
@@ -548,7 +554,7 @@ export default function ProfileScreen() {
       <View style={styles.modalOverlay}>
         <View style={styles.modalSheet}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>👗 Wardrobe</Text>
+            <Text style={[styles.modalTitle, { color: C.text.primary }]}>👗 Wardrobe</Text>
             <TouchableOpacity onPress={() => setWardrobeOpen(false)}>
               <Text style={styles.modalClose}>✕</Text>
             </TouchableOpacity>
@@ -556,7 +562,7 @@ export default function ProfileScreen() {
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Avatars */}
-            <Text style={styles.wardrobeSection}>🎨 Avatars</Text>
+            <Text style={[styles.wardrobeSection, { color: C.text.primary }]}>🎨 Avatars</Text>
             <View style={styles.wardrobeGrid}>
               {[...unlockedTrophyAvatars, ...ownedShopAvatars].map((item, idx) => {
                 const isTrophy = 'gainThreshold' in item;
@@ -572,7 +578,7 @@ export default function ProfileScreen() {
                     onPress={() => setEquippedAvatarId(active ? null : id)}
                   >
                     <Text style={styles.wardrobeEmoji}>{item.emoji}</Text>
-                    <Text style={styles.wardrobeName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={[styles.wardrobeName, { color: C.text.secondary }]} numberOfLines={1}>{item.name}</Text>
                     {active && <View style={[styles.wardrobeCheck, { backgroundColor: tierColor }]}>
                       <Text style={styles.wardrobeCheckText}>✓</Text>
                     </View>}
@@ -587,9 +593,9 @@ export default function ProfileScreen() {
             </View>
 
             {/* Pets */}
-            <Text style={styles.wardrobeSection}>🐾 Pets</Text>
+            <Text style={[styles.wardrobeSection, { color: C.text.primary }]}>🐾 Pets</Text>
             {[...unlockedTrophyPets, ...ownedShopPets].length === 0 ? (
-              <Text style={styles.wardrobeEmpty}>Reach +10% portfolio gain to unlock your first pet!</Text>
+              <Text style={[styles.wardrobeEmpty, { color: C.text.tertiary }]}>Reach +10% portfolio gain to unlock your first pet!</Text>
             ) : (
               <View style={styles.wardrobeGrid}>
                 {[...unlockedTrophyPets, ...ownedShopPets].map((item, idx) => {
@@ -605,7 +611,7 @@ export default function ProfileScreen() {
                       onPress={() => setEquippedPetId(active ? null : id)}
                     >
                       <Text style={styles.wardrobeEmoji}>{item.emoji}</Text>
-                      <Text style={styles.wardrobeName} numberOfLines={1}>{item.name}</Text>
+                      <Text style={[styles.wardrobeName, { color: C.text.secondary }]} numberOfLines={1}>{item.name}</Text>
                       {active && <View style={[styles.wardrobeCheck, { backgroundColor: tierColor }]}>
                         <Text style={styles.wardrobeCheckText}>✓</Text>
                       </View>}
@@ -635,13 +641,13 @@ export default function ProfileScreen() {
       <View style={styles.signOutOverlay}>
         <View style={styles.signOutCard}>
           <Text style={styles.deleteModalIcon}>⚠️</Text>
-          <Text style={styles.signOutTitle}>Delete Account</Text>
-          <Text style={styles.deleteModalMessage}>
+          <Text style={[styles.signOutTitle, { color: C.text.primary }]}>Delete Account</Text>
+          <Text style={[styles.deleteModalMessage, { color: C.text.secondary }]}>
             This will permanently delete your account, portfolio, and all progress. This cannot be undone.
           </Text>
           <View style={styles.signOutButtons}>
             <TouchableOpacity style={styles.signOutCancelBtn} onPress={() => setDeleteVisible(false)}>
-              <Text style={styles.signOutCancelText}>Cancel</Text>
+              <Text style={[styles.signOutCancelText, { color: C.text.secondary }]}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.deleteConfirmBtn} onPress={confirmDeleteAccount}>
               <Text style={styles.signOutConfirmText}>Delete</Text>
@@ -660,11 +666,11 @@ export default function ProfileScreen() {
     >
       <View style={styles.signOutOverlay}>
         <View style={styles.signOutCard}>
-          <Text style={styles.signOutTitle}>Sign Out</Text>
-          <Text style={styles.signOutMessage}>Are you sure you want to sign out?</Text>
+          <Text style={[styles.signOutTitle, { color: C.text.primary }]}>Sign Out</Text>
+          <Text style={[styles.signOutMessage, { color: C.text.secondary }]}>Are you sure you want to sign out?</Text>
           <View style={styles.signOutButtons}>
             <TouchableOpacity style={styles.signOutCancelBtn} onPress={() => setSignOutVisible(false)}>
-              <Text style={styles.signOutCancelText}>Cancel</Text>
+              <Text style={[styles.signOutCancelText, { color: C.text.secondary }]}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.signOutConfirmBtn} onPress={confirmSignOut}>
               <Text style={styles.signOutConfirmText}>Sign Out</Text>
@@ -681,28 +687,34 @@ export default function ProfileScreen() {
 function StatCard({ label, value, icon, valueColor }: {
   label: string; value: string; icon: string; valueColor?: string;
 }) {
+  const { appColorMode } = useAppStore();
+  const SC = appColorMode === 'light' ? LightColors : Colors;
   return (
-    <View style={styles.statCard}>
+    <View style={[styles.statCard, { backgroundColor: SC.bg.secondary, borderColor: SC.border.default }]}>
       <Text style={styles.statIcon}>{icon}</Text>
-      <Text style={[styles.statValue, valueColor ? { color: valueColor } : {}]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, { color: SC.text.primary }, valueColor ? { color: valueColor } : {}]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: SC.text.tertiary }]}>{label}</Text>
     </View>
   );
 }
 
 function SectionHeader({ title, icon }: { title: string; icon: string }) {
+  const { appColorMode } = useAppStore();
+  const SHC = appColorMode === 'light' ? LightColors : Colors;
   return (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionIcon}>{icon}</Text>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: SHC.text.primary }]}>{title}</Text>
     </View>
   );
 }
 
 function SettingsRow({ label, right }: { label: string; right: React.ReactNode }) {
+  const { appColorMode } = useAppStore();
+  const SRC = appColorMode === 'light' ? LightColors : Colors;
   return (
-    <View style={styles.settingsRow}>
-      <Text style={styles.settingsLabel}>{label}</Text>
+    <View style={[styles.settingsRow, { borderBottomColor: SRC.border.subtle }]}>
+      <Text style={[styles.settingsLabel, { color: SRC.text.primary }]}>{label}</Text>
       {right}
     </View>
   );

@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AppHeader from '../../src/components/AppHeader';
 import Sidebar from '../../src/components/Sidebar';
 import { useAppStore } from '../../src/store/useAppStore';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
+import { Colors, LightColors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -54,7 +54,7 @@ const TILE_STYLES: { key: 'default' | 'vivid' | 'glass'; label: string; desc: st
 
 export default function SettingsScreen() {
   const {
-    appColorMode, setAppColorMode,
+    appColorMode, setAppColorMode, appMode: settingsAppMode,
     appAccentColor, setAppAccentColor,
     appTileStyle, setAppTileStyle,
     appTabColors, setAppTabColor,
@@ -62,9 +62,13 @@ export default function SettingsScreen() {
   } = useAppStore();
 
   const isDark = appColorMode === 'dark';
+  const isLight = !isDark;
+  const C = isLight ? LightColors : Colors;
 
   // Colours derived from current mode
-  const bg      = isDark ? '#264E88' : '#F0F2F8';
+  const bg      = settingsAppMode === 'adult' ? (isDark ? '#000000' : '#FFFFFF') : isDark ? '#264E88' : '#F0F2F8';
+  const adultGrad = settingsAppMode === 'adult';
+  const sgc = (a: string, b: string, c: string) => adultGrad ? ['transparent','transparent','transparent'] as any : [a,b,c] as any;
   const surface = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
   const border  = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
   const txt     = isDark ? '#F1F5F9' : '#1A1A2E';
@@ -75,14 +79,14 @@ export default function SettingsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]} edges={['top']}>
       {/* Full-screen tint */}
       <LinearGradient
-        colors={isDark
+        colors={adultGrad ? ['transparent','transparent','transparent'] as any : isDark
           ? [`${appAccentColor}30`, `${appAccentColor}18`, 'transparent']
           : [`${appAccentColor}20`, `${appAccentColor}10`, 'transparent']}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['transparent', `${appAccentColor}15`, `${appAccentColor}25`]}
+        colors={sgc('transparent', `${appAccentColor}15`, `${appAccentColor}25`)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />

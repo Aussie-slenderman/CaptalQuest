@@ -1,5 +1,51 @@
 // CapitalQuest Theme — Charles Schwab-inspired, dark-first professional palette
 
+export const LightColors = {
+  bg: {
+    primary: '#FFFFFF',
+    secondary: '#F3F4F6',
+    tertiary: '#E5E7EB',
+    input: '#D1D5DB',
+    overlay: 'rgba(0,0,0,0.5)',
+  },
+  brand: {
+    primary: '#0080B3',
+    accent: '#00A884',
+    gold: '#B8860B',
+    purple: '#5B21B6',
+  },
+  market: {
+    gain: '#15803D',
+    gainLight: '#16A34A',
+    gainBg: 'rgba(21,128,61,0.1)',
+    loss: '#DC2626',
+    lossLight: '#EF4444',
+    lossBg: 'rgba(220,38,38,0.1)',
+    neutral: '#6B7280',
+  },
+  text: {
+    primary: '#0A0E1A',
+    secondary: '#374151',
+    tertiary: '#6B7280',
+    inverse: '#FFFFFF',
+    link: '#0080B3',
+  },
+  border: {
+    default: '#D1D5DB',
+    subtle: '#E5E7EB',
+    focus: '#0080B3',
+  },
+  chart: {
+    line: '#0080B3',
+    area: 'rgba(0,128,179,0.1)',
+    grid: '#D1D5DB',
+  },
+  levels: [
+    '#94A3B8', '#3B82F6', '#10B981', '#D97706', '#EA580C',
+    '#DC2626', '#7C3AED', '#DB2777', '#B8860B', '#00A884',
+  ],
+};
+
 export const Colors = {
   // Core backgrounds (Schwab dark theme)
   bg: {

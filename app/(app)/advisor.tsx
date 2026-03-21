@@ -9,7 +9,7 @@ import AppHeader from '../../src/components/AppHeader';
 import Sidebar from '../../src/components/Sidebar';
 import { useAppStore } from '../../src/store/useAppStore';
 import { streamMarketAdvice } from '../../src/services/aiAdvisor';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
+import { Colors, LightColors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 import type { Portfolio } from '../../src/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,10 +37,14 @@ const QUICK_PROMPTS = [
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function AdvisorScreen() {
-  const { portfolio, user, appColorMode, appTabColors, isSidebarOpen, setSidebarOpen } = useAppStore();
+  const { portfolio, user, appColorMode, appTabColors, isSidebarOpen, setSidebarOpen, appMode: advisorAppMode } = useAppStore();
   const tabColor = appTabColors['advisor'] ?? '#00D4AA';
   const isLight = appColorMode === 'light';
-  const screenBg = isLight ? '#E8FFF8' : '#147870';
+  const C = isLight ? LightColors : Colors;
+  const screenBg = advisorAppMode === 'adult' ? (isLight ? '#FFFFFF' : '#000000') : isLight ? '#E8FFF8' : '#147870';
+  const adultGrad = advisorAppMode === 'adult';
+  const gc = (a: string, b: string, c: string) => adultGrad ? ['transparent','transparent','transparent'] as any : [a,b,c] as any;
+  const gcFull = (a: string, b: string, c: string, d: string) => adultGrad ? ['transparent','transparent','transparent',screenBg] as any : [a,b,c,d] as any;
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -159,17 +163,17 @@ export default function AdvisorScreen() {
     >
       {/* Full-screen colour wash — top */}
       <LinearGradient
-        colors={[`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg] as any}
+        colors={gcFull(`${tabColor}80`, `${tabColor}50`, `${tabColor}30`, screenBg)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['transparent', `${tabColor}30`, `${tabColor}40`] as any}
+        colors={gc('transparent', `${tabColor}30`, `${tabColor}40`)}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={[`${tabColor}28`, 'transparent', `${tabColor}28`] as any}
+        colors={gc(`${tabColor}28`, 'transparent', `${tabColor}28`)}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
@@ -179,7 +183,7 @@ export default function AdvisorScreen() {
 
       {/* Portfolio summary strip */}
       {portfolio && (
-        <View style={styles.portfolioStrip}>
+        <View style={[styles.portfolioStrip, { backgroundColor: C.bg.tertiary, borderColor: C.border.subtle }]}>
           <PortfolioStat
             label="Portfolio"
             value={`$${(portfolio.totalValue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
@@ -215,7 +219,7 @@ export default function AdvisorScreen() {
               <View style={styles.dot} />
               <View style={styles.dot} />
             </Animated.View>
-            <Text style={styles.thinkingLabel}>AI is analysing markets…</Text>
+            <Text style={[styles.thinkingLabel, { color: C.text.tertiary }]}>AI is analysing markets…</Text>
           </View>
         )}
       </ScrollView>
@@ -231,23 +235,23 @@ export default function AdvisorScreen() {
           {QUICK_PROMPTS.map((qp) => (
             <TouchableOpacity
               key={qp.label}
-              style={styles.quickPromptChip}
+              style={[styles.quickPromptChip, { backgroundColor: C.bg.tertiary, borderColor: C.border.default }]}
               onPress={() => sendMessage(qp.prompt)}
             >
-              <Text style={styles.quickPromptText}>{qp.label}</Text>
+              <Text style={[styles.quickPromptText, { color: C.text.secondary }]}>{qp.label}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       )}
 
       {/* Input bar */}
-      <View style={styles.inputBar}>
+      <View style={[styles.inputBar, { backgroundColor: C.bg.secondary, borderTopColor: C.border.default }]}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: C.bg.input, borderColor: C.border.default, color: C.text.primary }]}
           value={inputText}
           onChangeText={setInputText}
           placeholder="Ask about stocks, trends, or your portfolio…"
-          placeholderTextColor={Colors.text.tertiary}
+          placeholderTextColor={C.text.tertiary}
           multiline
           maxLength={500}
           editable={!isStreaming}
@@ -272,11 +276,14 @@ export default function AdvisorScreen() {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function PortfolioStat({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
+  const { appColorMode } = useAppStore();
+  const SC = appColorMode === 'light' ? LightColors : Colors;
   return (
     <View style={styles.stat}>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statLabel, { color: SC.text.tertiary }]}>{label}</Text>
       <Text style={[
         styles.statValue,
+        { color: SC.text.primary },
         positive === true && { color: Colors.market.gain },
         positive === false && { color: Colors.market.loss },
       ]}>{value}</Text>
@@ -285,6 +292,8 @@ function PortfolioStat({ label, value, positive }: { label: string; value: strin
 }
 
 function ChatBubble({ message, isStreaming }: { message: ChatMessage; isStreaming: boolean }) {
+  const { appColorMode } = useAppStore();
+  const BC = appColorMode === 'light' ? LightColors : Colors;
   const isAI = message.role === 'ai';
   const isEmpty = message.text === '' && isStreaming;
 
@@ -296,13 +305,13 @@ function ChatBubble({ message, isStreaming }: { message: ChatMessage; isStreamin
         return <Text key={i} style={styles.mdHeader}>{line.slice(3)}</Text>;
       }
       if (line.startsWith('**') && line.endsWith('**')) {
-        return <Text key={i} style={styles.mdBold}>{line.slice(2, -2)}</Text>;
+        return <Text key={i} style={[styles.mdBold, { color: BC.text.primary }]}>{line.slice(2, -2)}</Text>;
       }
       // Bold inline segments
       const parts = line.split(/\*\*(.*?)\*\*/g);
       if (parts.length > 1) {
         return (
-          <Text key={i} style={isAI ? styles.aiBubbleText : styles.userBubbleText}>
+          <Text key={i} style={[isAI ? styles.aiBubbleText : styles.userBubbleText, isAI ? { color: BC.text.primary } : {}]}>
             {parts.map((p, j) =>
               j % 2 === 0
                 ? <Text key={j}>{p}</Text>
@@ -313,7 +322,7 @@ function ChatBubble({ message, isStreaming }: { message: ChatMessage; isStreamin
         );
       }
       return (
-        <Text key={i} style={isAI ? styles.aiBubbleText : styles.userBubbleText}>
+        <Text key={i} style={[isAI ? styles.aiBubbleText : styles.userBubbleText, isAI ? { color: BC.text.primary } : {}]}>
           {line}{'\n'}
         </Text>
       );
@@ -336,10 +345,10 @@ function ChatBubble({ message, isStreaming }: { message: ChatMessage; isStreamin
 
   return (
     <View style={styles.aiBubbleWrapper}>
-      <View style={styles.aiIcon}>
+      <View style={[styles.aiIcon, { backgroundColor: BC.bg.tertiary }]}>
         <Text style={{ fontSize: 16 }}>🤖</Text>
       </View>
-      <View style={styles.aiBubble}>
+      <View style={[styles.aiBubble, { backgroundColor: BC.bg.secondary, borderColor: BC.border.subtle }]}>
         {isEmpty
           ? <ActivityIndicator size="small" color={Colors.brand.primary} />
           : renderText(message.text)

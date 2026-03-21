@@ -12,7 +12,7 @@ import { useAppStore } from '../../src/store/useAppStore';
 import { formatRelativeTime } from '../../src/utils/formatters';
 import { getQuotes } from '../../src/services/stockApi';
 import { updateUser } from '../../src/services/auth';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
+import { Colors, LightColors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 
 // ─── Market indices ───────────────────────────────────────────────────────────
 const MARKET_INDICES = [
@@ -71,9 +71,13 @@ export default function DashboardScreen() {
   const {
     user, setUser,
     quotes, setQuote, notifications, newsLastRead,
-    portfolio, isSidebarOpen, setSidebarOpen, appTabColors,
+    portfolio, isSidebarOpen, setSidebarOpen, appTabColors, appMode, appColorMode,
     showWelcomePopup, setShowWelcomePopup,
   } = useAppStore();
+  const isAdult = appMode === 'adult';
+  const adultBg = appColorMode === 'light' ? '#FFFFFF' : '#000000';
+  const isLight = appColorMode === 'light';
+  const C = isLight ? LightColors : Colors;
 
   // Dismisses the welcome popup and marks it as permanently shown in the DB
   function handleDismissWelcome() {
@@ -84,7 +88,8 @@ export default function DashboardScreen() {
     }
   }
 
-  const tabColor = appTabColors['home'] ?? Colors.brand.primary;
+  const tabColor = appTabColors["home"] ?? Colors.brand.primary;
+  const gc3 = (a: string, b: string, c: string) => isAdult ? ["transparent","transparent","transparent"] as any : [a,b,c] as any;
 
   const unreadNotifications = useMemo(() => {
     const heldSymbols = portfolio?.holdings.map(h => h.symbol) ?? [];
@@ -109,8 +114,8 @@ export default function DashboardScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor={Colors.bg.primary} />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: isAdult ? adultBg : C.bg.primary }]}>
+        <StatusBar barStyle="light-content" backgroundColor={isAdult ? adultBg : C.bg.primary} />
 
         {/* ── Top bar ── */}
         <AppHeader title="CapitalQuest" />
@@ -128,9 +133,9 @@ export default function DashboardScreen() {
             const pct = live?.changePercent ?? idx.changePercent;
             const up = pct >= 0;
             return (
-              <View key={idx.symbol} style={styles.indexPill}>
-                <Text style={styles.indexName}>{idx.name}</Text>
-                <Text style={styles.indexPrice}>
+              <View key={idx.symbol} style={[styles.indexPill, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+                <Text style={[styles.indexName, { color: C.text.tertiary }]}>{idx.name}</Text>
+                <Text style={[styles.indexPrice, { color: C.text.primary }]}>
                   {price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
                 <Text style={[styles.indexChange, { color: up ? Colors.market.gain : Colors.market.loss }]}>
@@ -148,13 +153,13 @@ export default function DashboardScreen() {
         >
           {/* ── Hero slogan ── */}
           <LinearGradient
-            colors={[`${tabColor}22`, `${tabColor}08`, 'transparent']}
+            colors={gc3(`${tabColor}22`, `${tabColor}08`, "transparent")}
             style={styles.heroSection}
           >
-            <Text style={styles.heroSlogan}>Practice.</Text>
-            <Text style={styles.heroSlogan}>Trade.</Text>
+            <Text style={[styles.heroSlogan, { color: C.text.primary }]}>Practice.</Text>
+            <Text style={[styles.heroSlogan, { color: C.text.primary }]}>Trade.</Text>
             <Text style={[styles.heroSlogan, { color: tabColor }]}>Prosper.</Text>
-            <Text style={styles.heroSubtitle}>
+            <Text style={[styles.heroSubtitle, { color: C.text.secondary }]}>
               Master the markets risk-free — real prices, real strategies.
             </Text>
 
@@ -186,26 +191,26 @@ export default function DashboardScreen() {
 
           {/* ── News section ── */}
           <View style={styles.newsHeader}>
-            <Text style={styles.newsTitle}>📰  Market News</Text>
+            <Text style={[styles.newsTitle, { color: C.text.primary }]}>📰  Market News</Text>
             <TouchableOpacity onPress={() => router.push('/(app)/home' as never)}>
               <Text style={[styles.seeAll, { color: tabColor }]}>See all →</Text>
             </TouchableOpacity>
           </View>
 
           {DASHBOARD_NEWS.map((article, i) => (
-            <TouchableOpacity key={article.id} style={styles.newsCard} activeOpacity={0.8}>
-              <View style={styles.newsCategoryBadge}>
+            <TouchableOpacity key={article.id} style={[styles.newsCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]} activeOpacity={0.8}>
+              <View style={[styles.newsCategoryBadge, { backgroundColor: C.bg.tertiary }]}>
                 <Text style={styles.newsCategoryText}>{article.category}</Text>
               </View>
-              <Text style={styles.newsHeadline} numberOfLines={2}>{article.headline}</Text>
+              <Text style={[styles.newsHeadline, { color: C.text.primary }]} numberOfLines={2}>{article.headline}</Text>
               <View style={styles.newsMeta}>
                 <Text style={styles.newsSource}>{article.source}</Text>
-                <Text style={styles.newsDot}>·</Text>
-                <Text style={styles.newsTime}>{formatRelativeTime(article.publishedAt)}</Text>
+                <Text style={[styles.newsDot, { color: C.text.tertiary }]}>·</Text>
+                <Text style={[styles.newsTime, { color: C.text.tertiary }]}>{formatRelativeTime(article.publishedAt)}</Text>
                 <View style={styles.newsTagRow}>
                   {article.relatedSymbols.slice(0, 2).map(sym => (
-                    <View key={sym} style={styles.newsTag}>
-                      <Text style={styles.newsTagText}>{sym}</Text>
+                    <View key={sym} style={[styles.newsTag, { backgroundColor: C.bg.input, borderColor: C.border.default }]}>
+                      <Text style={[styles.newsTagText, { color: C.text.secondary }]}>{sym}</Text>
                     </View>
                   ))}
                 </View>

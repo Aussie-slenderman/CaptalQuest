@@ -17,8 +17,9 @@ export default function AppLayout() {
   const {
     user, setPortfolio, setChatRooms, setUnreadCount, unreadCount,
     portfolio, setQuote,
-    appAccentColor, appColorMode,
+    appAccentColor, appColorMode, appMode,
   } = useAppStore();
+  const isAdult = appMode === 'adult';
 
   // Return to dashboard whenever app comes back to foreground (native only —
   // on web, AppState fires on every browser-tab switch which would be disruptive)
@@ -80,56 +81,67 @@ export default function AppLayout() {
     return unsub;
   }, [user?.id]);
 
-  const tabBarBg = appColorMode === 'light' ? '#F0F2F8' : Colors.bg.secondary;
-  const tabBarBorder = appColorMode === 'light' ? 'rgba(0,0,0,0.12)' : Colors.border.default;
+  const tabBarBg = isAdult ? '#000000'
+    : appColorMode === 'light' ? '#F0F2F8'
+    : Colors.bg.secondary;
+  const tabBarBorder = isAdult ? '#1a1a1a'
+    : appColorMode === 'light' ? 'rgba(0,0,0,0.12)'
+    : Colors.border.default;
+  const screenBg = isAdult ? '#000000' : Colors.bg.primary;
+
+  // In adult mode all tab-icon highlight colours become transparent
+  const ic = (color: string) => isAdult ? 'transparent' : color;
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: screenBg }}>
     <Tabs
       initialRouteName="dashboard"
       screenOptions={{
         headerShown: false,
+        contentStyle: { backgroundColor: screenBg },
         tabBarStyle: [styles.tabBar, { backgroundColor: tabBarBg, borderTopColor: tabBarBorder }],
-        tabBarActiveTintColor: appAccentColor,
-        tabBarInactiveTintColor: Colors.text.tertiary,
+        tabBarActiveTintColor: isAdult ? '#ffffff' : appAccentColor,
+        tabBarInactiveTintColor: isAdult ? '#555555' : Colors.text.tertiary,
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
       }}
     >
-      {/* ── LEFT of Home: 5 tabs ── */}
+      {/* ── LEFT of Home: 5 tabs (kids) / 3 tabs (adult) ── */}
       <Tabs.Screen
         name="tutorial"
         options={{
           title: 'Learn',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🎓" focused={focused} bgColor="rgba(210, 150, 255, 0.35)" />,
+          href: isAdult ? null : undefined,
+          tabBarIcon: ({ focused }) => <TabIcon icon="🎓" focused={focused} bgColor={ic('rgba(210, 150, 255, 0.35)')} />,
         }}
       />
       <Tabs.Screen
         name="home"
         options={{
           title: 'Markets',
-          tabBarIcon: ({ focused }) => <TabIcon icon="📊" focused={focused} bgColor="rgba(120, 180, 255, 0.35)" />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="📊" focused={focused} bgColor={ic('rgba(120, 180, 255, 0.35)')} />,
         }}
       />
       <Tabs.Screen
         name="portfolio"
         options={{
           title: 'Portfolio',
-          tabBarIcon: ({ focused }) => <TabIcon icon="💼" focused={focused} bgColor="rgba(100, 240, 160, 0.35)" />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="💼" focused={focused} bgColor={ic('rgba(100, 240, 160, 0.35)')} />,
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
           title: 'Ranks',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🏆" focused={focused} bgColor="rgba(255, 220, 100, 0.35)" />,
+
+          tabBarIcon: ({ focused }) => <TabIcon icon="🏆" focused={focused} bgColor={ic('rgba(255, 220, 100, 0.35)')} />,
         }}
       />
       <Tabs.Screen
         name="advisor"
         options={{
           title: 'AI',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🤖" focused={focused} bgColor="rgba(100, 240, 210, 0.35)" />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="🤖" focused={focused} bgColor={ic('rgba(100, 240, 210, 0.35)')} />,
           tabBarLabelStyle: { ...styles.tabLabel, color: Colors.brand.accent },
         }}
       />
@@ -150,7 +162,7 @@ export default function AppLayout() {
           title: 'Social',
           tabBarIcon: ({ focused }) => (
             <View>
-              <TabIcon icon="💬" focused={focused} bgColor="rgba(255, 160, 200, 0.35)" />
+              <TabIcon icon="💬" focused={focused} bgColor={ic('rgba(255, 160, 200, 0.35)')} />
               {unreadCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -164,28 +176,30 @@ export default function AppLayout() {
         name="trophy-road"
         options={{
           title: 'Trophy',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🎖️" focused={focused} bgColor="rgba(255, 200, 120, 0.35)" />,
+          href: isAdult ? null : undefined,
+          tabBarIcon: ({ focused }) => <TabIcon icon="🎖️" focused={focused} bgColor={ic('rgba(255, 200, 120, 0.35)')} />,
         }}
       />
       <Tabs.Screen
         name="shop"
         options={{
           title: 'Shop',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🛒" focused={focused} bgColor="rgba(120, 230, 240, 0.35)" />,
+          href: isAdult ? null : undefined,
+          tabBarIcon: ({ focused }) => <TabIcon icon="🛒" focused={focused} bgColor={ic('rgba(120, 230, 240, 0.35)')} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon icon="👤" focused={focused} bgColor="rgba(190, 170, 255, 0.35)" />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="👤" focused={focused} bgColor={ic('rgba(190, 170, 255, 0.35)')} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ focused }) => <TabIcon icon="⚙️" focused={focused} bgColor="rgba(180, 200, 210, 0.35)" />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="⚙️" focused={focused} bgColor={ic('rgba(180, 200, 210, 0.35)')} />,
         }}
       />
 
@@ -217,15 +231,19 @@ function TabIcon({
 
 function CenterTabButton({ onPress, accessibilityState }: any) {
   const focused = accessibilityState?.selected;
+  const isAdultMode = useAppStore(s => s.appMode) === 'adult';
+  const boxStyle = isAdultMode
+    ? { backgroundColor: focused ? '#333333' : '#111111', borderColor: '#333333' }
+    : undefined;
   return (
     <TouchableOpacity
       onPress={onPress}
       style={styles.centerTabOuter}
       activeOpacity={0.85}
     >
-      <View style={[styles.centerTabBox, focused && styles.centerTabBoxActive]}>
+      <View style={[styles.centerTabBox, !isAdultMode && focused && styles.centerTabBoxActive, boxStyle]}>
         <Text style={styles.centerTabIcon}>🏠</Text>
-        <Text style={[styles.centerTabLabel, { color: focused ? '#fff' : Colors.text.tertiary }]}>Home</Text>
+        <Text style={[styles.centerTabLabel, { color: focused ? '#fff' : isAdultMode ? '#555555' : Colors.text.tertiary }]}>Home</Text>
       </View>
     </TouchableOpacity>
   );

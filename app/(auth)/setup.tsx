@@ -8,20 +8,21 @@ import { Colors, FontSize, FontWeight } from '../../src/constants/theme';
 const STARTING_BALANCE = 10000;
 
 export default function SetupScreen() {
-  const { user, setUser, setShowWelcomePopup } = useAppStore();
+  const { user, setUser, setShowWelcomePopup, appMode } = useAppStore();
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
         await initPortfolio(user.id, STARTING_BALANCE);
-        // Persist onboarding + welcome flag to DB so _layout.tsx can detect first-time users
+        // Persist onboarding + welcome flag + app mode to DB
         await updateUser(user.id, {
           startingBalance: STARTING_BALANCE,
           onboardingComplete: true,
           welcomeShown: false,
+          appMode,
         });
-        setUser({ ...user, startingBalance: STARTING_BALANCE, onboardingComplete: true, welcomeShown: false });
+        setUser({ ...user, startingBalance: STARTING_BALANCE, onboardingComplete: true, welcomeShown: false, appMode });
       } catch {
         // Non-critical — still route to dashboard
       }
