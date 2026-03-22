@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Dimensions, Animated, Image,
+  Dimensions, Animated, Image, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Defs, LinearGradient as SvgGrad, Stop, Circle, Polygon, Line } from 'react-native-svg';
@@ -29,6 +29,15 @@ export default function WelcomeScreen() {
   }, []);
 
   return (
+    <View style={{ flex: 1 }}>
+      {/* Disclaimer banner — web only */}
+      {Platform.OS === 'web' && (
+        <View style={styles.disclaimerBanner}>
+          <Text style={styles.disclaimerText}>
+            🎮  THIS IS A GAME ONLY — NO REAL MONEY IS INVOLVED. ALL TRADES ARE VIRTUAL.
+          </Text>
+        </View>
+      )}
     <LinearGradient
       colors={[Colors.bg.primary, '#0D1529', Colors.bg.primary]}
       style={styles.container}
@@ -139,10 +148,26 @@ export default function WelcomeScreen() {
         <Text style={styles.ageNote}>Recommended ages 8–18 · No real money involved</Text>
       </Animated.View>
     </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  disclaimerBanner: {
+    backgroundColor: '#F5C518',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  disclaimerText: {
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: 0.4,
+  },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   orb: {
     position: 'absolute',
