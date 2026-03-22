@@ -6,24 +6,87 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useAppStore } from '../../src/store/useAppStore';
-import { signOut, deleteAccount } from '../../src/services/auth';
+import { signOut, deleteAccount, updateUser } from '../../src/services/auth';
 import { ACHIEVEMENTS, LEVELS, getXPProgress } from '../../src/constants/achievements';
-import { TROPHY_REWARDS, getCurrentAvatar, getCurrentPet, type TrophyReward } from '../../src/constants/trophyRewards';
-import { SHOP_ITEMS, TIER_COLORS, TIER_LABELS, blingAtMilestone, type ShopItem, type PetAbility } from '../../src/constants/shopItems';
 import AppHeader from '../../src/components/AppHeader';
 import Sidebar from '../../src/components/Sidebar';
 import { Colors, LightColors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 import { formatCurrency, formatPercent, formatAccountNumber } from '../../src/utils/formatters';
+import type { AvatarConfig } from '../../src/types';
+
+// ─── Avatar rendering constants ──────────────────────────────────────────────
+const SKIN_TONES = ['#FDDBB4', '#F1C27D', '#E0AC69', '#C68642', '#8D5524'];
+const HAIR_STYLE_LABELS = ['Round', 'Spiky', 'Long', 'Curly', 'Bun', 'Buzz'];
+const HAIR_COLORS = ['#1A1A1A', '#8B4513', '#FFD700', '#FF6B6B', '#4FC3F7', '#E8E8E8'];
+const EYE_COLORS = ['#2C3E50', '#16A085', '#8E44AD', '#E67E22', '#2980B9'];
+const OUTFIT_COLORS = ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C'];
+
+function AvatarPreview({ config, size = 'md' }: { config: AvatarConfig; size?: 'sm' | 'md' | 'lg' }) {
+  const skin = SKIN_TONES[config.skinTone] ?? SKIN_TONES[0];
+  const hair = HAIR_COLORS[config.hairColor] ?? HAIR_COLORS[0];
+  const eye = EYE_COLORS[config.eyeColor] ?? EYE_COLORS[0];
+  const outfit = OUTFIT_COLORS[config.outfitColor] ?? OUTFIT_COLORS[0];
+
+  const scale = size === 'lg' ? 1.4 : size === 'sm' ? 0.7 : 1;
+  const s = (n: number) => n * scale;
+
+  const hairTopStyle = () => {
+    switch (config.hairStyle) {
+      case 0: return { borderRadius: s(40), top: -s(18), width: s(76), height: s(38), left: -s(2) };
+      case 1: return { top: -s(22), width: s(76), height: s(28), left: -s(2), borderTopLeftRadius: s(8), borderTopRightRadius: s(8) };
+      case 2: return { borderRadius: s(40), top: -s(14), width: s(90), height: s(48), left: -s(9) };
+      case 3: return { borderRadius: s(50), top: -s(20), width: s(84), height: s(44), left: -s(6) };
+      case 4: return { borderRadius: s(40), top: -s(26), width: s(50), height: s(36), left: s(11) };
+      case 5: return { borderRadius: s(4), top: -s(10), width: s(76), height: s(14), left: -s(2) };
+      default: return { borderRadius: s(40), top: -s(18), width: s(76), height: s(38), left: -s(2) };
+    }
+  };
+
+  return (
+    <View style={{ alignItems: 'center', width: s(80), height: s(120) }}>
+      <View style={[{ position: 'absolute', zIndex: 2 }, hairTopStyle(), { backgroundColor: hair }]} />
+      <View style={{
+        width: s(72), height: s(72), borderRadius: s(36),
+        alignItems: 'center', justifyContent: 'center',
+        marginTop: s(16), zIndex: 1, backgroundColor: skin,
+        shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
+      }}>
+        <View style={{ flexDirection: 'row', gap: s(14), marginBottom: s(6) }}>
+          <View style={{ width: s(12), height: s(12), borderRadius: s(6), backgroundColor: eye }} />
+          <View style={{ width: s(12), height: s(12), borderRadius: s(6), backgroundColor: eye }} />
+        </View>
+        <View style={{ overflow: 'hidden', width: s(28), height: s(14) }}>
+          <View style={{
+            width: s(28), height: s(28), borderRadius: s(14),
+            borderWidth: 3, borderColor: '#5C3317',
+            backgroundColor: 'transparent', marginTop: -s(14),
+          }} />
+        </View>
+      </View>
+      <View style={{ width: s(18), height: s(10), zIndex: 0, backgroundColor: skin }} />
+      <View style={{ width: s(68), height: s(36), borderRadius: s(12), backgroundColor: outfit, alignItems: 'center', justifyContent: 'flex-start', paddingTop: s(4) }}>
+        <View style={{ width: 0, height: 0, borderLeftWidth: s(10), borderRightWidth: s(10), borderTopWidth: s(8), borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: outfit }} />
+      </View>
+    </View>
+  );
+}
+
+function DefaultAvatarCircle({ initial, levelColor }: { initial: string; levelColor: string }) {
+  return (
+    <LinearGradient colors={[levelColor, `${levelColor}88`]} style={profileAvatarStyles.circle}>
+      <Text style={profileAvatarStyles.initial}>{initial.toUpperCase()}</Text>
+    </LinearGradient>
+  );
+}
+
+const profileAvatarStyles = StyleSheet.create({
+  circle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
+  initial: { fontSize: 32, fontWeight: FontWeight.bold, color: '#fff' },
+});
 
 export default function ProfileScreen() {
   const {
     user, portfolio, setUser,
-    bling,
-    equippedAvatarId, setEquippedAvatarId,
-    equippedPetId,   setEquippedPetId,
-    shopPurchases,
-    petAbilityActiveUntil, setPetAbilityActiveUntil,
-    petAbilityLastUsed,    setPetAbilityLastUsed,
     appColorMode, appTabColors,
     isSidebarOpen, setSidebarOpen,
   } = useAppStore();
@@ -34,91 +97,30 @@ export default function ProfileScreen() {
   const gc = (a: string, b: string, c: string) => [a,b,c] as any;
   const gcFull = (a: string, b: string, c: string, d: string) => [a,b,c,d] as any;
   const [isDark] = useState(true);
-  const [wardrobeOpen, setWardrobeOpen] = useState(false);
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
-  const [abilityInfoVisible, setAbilityInfoVisible] = useState(false);
-  const [now, setNow] = useState(Date.now());
-
-  // Tick every second to keep timers live
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
+  const [activeProfileTab, setActiveProfileTab] = useState<'profile' | 'wardrobe'>('profile');
+  const [localConfig, setLocalConfig] = useState<AvatarConfig>(
+    user?.avatarConfig ?? { skinTone: 0, hairStyle: 0, hairColor: 0, eyeColor: 0, outfitColor: 0 }
+  );
+  const [savingAvatar, setSavingAvatar] = useState(false);
 
   if (!user) return null;
 
+  const updateConfig = (key: keyof AvatarConfig, value: number) =>
+    setLocalConfig(prev => ({ ...prev, [key]: value }));
+
+  const handleSaveAvatar = async () => {
+    setSavingAvatar(true);
+    try {
+      await updateUser(user.id, { avatarConfig: localConfig });
+      setUser({ ...user, avatarConfig: localConfig });
+    } catch { /* non-critical */ }
+    setSavingAvatar(false);
+  };
+
   const xpInfo = getXPProgress(user.xp || 0);
   const levelColor = LEVELS.find(l => l.level === user.level)?.color ?? Colors.brand.primary;
-  const gainPct = portfolio?.totalGainLossPercent ?? 0;
-
-  // ── Pet ability ─────────────────────────────────────────────────────────────
-  const equippedShopPet = (equippedPetId && !equippedPetId.startsWith('trophy:'))
-    ? SHOP_ITEMS.find(i => i.id === equippedPetId && i.type === 'pet') ?? null
-    : null;
-  const currentAbility: PetAbility | null = equippedShopPet?.ability ?? null;
-  const isPassiveAbility = currentAbility?.abilityType === 'daily_luck';
-  const abilityActive  = !!petAbilityActiveUntil && now < petAbilityActiveUntil;
-  const lastUsedAt     = equippedShopPet ? (petAbilityLastUsed[equippedShopPet.id] ?? 0) : 0;
-  // For daily_luck: "cooldown" = already rolled today (within 24h) but no proc
-  const rolledToday = isPassiveAbility && lastUsedAt > 0 && (now - lastUsedAt) < 24 * 60 * 60 * 1000;
-  const abilityOnCooldown = isPassiveAbility
-    ? false // daily_luck doesn't show a "cooldown" UI — it auto-rolls
-    : !abilityActive && lastUsedAt > 0 && !!currentAbility
-      && (now - lastUsedAt) < currentAbility.cooldownMs;
-  const activeRemainingMs   = abilityActive && petAbilityActiveUntil ? petAbilityActiveUntil - now : 0;
-  const cooldownRemainingMs = abilityOnCooldown && currentAbility ? currentAbility.cooldownMs - (now - lastUsedAt) : 0;
-  const nextRollMs = isPassiveAbility && rolledToday ? (24 * 60 * 60 * 1000) - (now - lastUsedAt) : 0;
-
-  function fmtDuration(ms: number): string {
-    const s = Math.ceil(ms / 1000);
-    const d = Math.floor(s / 86400);
-    const h = Math.floor((s % 86400) / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
-    if (d > 0) return `${d}d ${h}h`;
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${sec}s`;
-    return `${sec}s`;
-  }
-
-  function handleActivateAbility() {
-    if (!equippedShopPet || !currentAbility || abilityActive || abilityOnCooldown) return;
-    const expiresAt = now + currentAbility.durationMs;
-    setPetAbilityActiveUntil(expiresAt);
-    setPetAbilityLastUsed(equippedShopPet.id, now);
-  }
-
-  // Resolve displayed avatar: check shop items and trophy road rewards by equipped ID
-  const defaultAvatar = getCurrentAvatar(gainPct);
-  const defaultPet    = getCurrentPet(gainPct);
-
-  function resolveItem(id: string | null): { emoji: string; name: string; color: string } | null {
-    if (!id) return null;
-    // Trophy road item: id = "trophy:50" means gainThreshold=50
-    if (id.startsWith('trophy:')) {
-      const gt = parseInt(id.split(':')[1], 10);
-      const r = TROPHY_REWARDS.find(t => t.gainThreshold === gt);
-      return r ? { emoji: r.emoji, name: r.name, color: r.color } : null;
-    }
-    // Shop item
-    const s = SHOP_ITEMS.find(i => i.id === id);
-    return s ? { emoji: s.emoji, name: s.name, color: TIER_COLORS[s.tier] } : null;
-  }
-
-  const resolvedAvatar = resolveItem(equippedAvatarId);
-  const resolvedPet    = resolveItem(equippedPetId);
-
-  // What is actually shown as the profile icon
-  const displayAvatarEmoji = resolvedAvatar?.emoji ?? defaultAvatar.emoji;
-  const displayPetEmoji    = resolvedPet?.emoji    ?? defaultPet?.emoji ?? null;
-  const displayAvatarName  = resolvedAvatar?.name  ?? defaultAvatar.name;
-
-  // Wardrobe: all unlocked avatars (trophy road + shop)
-  const unlockedTrophyAvatars = TROPHY_REWARDS.filter(r => r.type === 'avatar' && gainPct >= r.gainThreshold);
-  const unlockedTrophyPets    = TROPHY_REWARDS.filter(r => r.type === 'pet'    && gainPct >= r.gainThreshold);
-  const ownedShopAvatars = SHOP_ITEMS.filter(i => i.type === 'avatar' && shopPurchases.includes(i.id));
-  const ownedShopPets    = SHOP_ITEMS.filter(i => i.type === 'pet'    && shopPurchases.includes(i.id));
 
   const handleSignOut = () => setSignOutVisible(true);
 
@@ -166,37 +168,27 @@ export default function ProfileScreen() {
         colors={gcFull(`${tabColor}CC`, `${tabColor}88`, `${tabColor}22`, screenBg)}
         style={styles.headerGradient}
       >
-        {/* Bling badge top-right */}
-        <View style={styles.blingBadge}>
-          <Text style={styles.blingEmoji}>💎</Text>
-          <Text style={styles.blingText}>{bling.toLocaleString()}</Text>
-        </View>
         <View style={styles.avatarContainer}>
-          <LinearGradient colors={[levelColor, `${levelColor}88`]} style={styles.avatar}>
-            <Text style={styles.avatarEmoji}>{displayAvatarEmoji}</Text>
-            {displayPetEmoji && (
-              <View style={[styles.petBadge, { backgroundColor: levelColor }]}>
-                <Text style={styles.petBadgeEmoji}>{displayPetEmoji}</Text>
+          {user.avatarConfig ? (
+            <View style={styles.avatarWrapper}>
+              <AvatarPreview config={user.avatarConfig} size="md" />
+              <View style={[styles.levelBadge, { backgroundColor: levelColor }]}>
+                <Text style={styles.levelBadgeText}>Lv.{user.level}</Text>
               </View>
-            )}
-          </LinearGradient>
-          <View style={[styles.levelBadge, { backgroundColor: levelColor }]}>
-            <Text style={styles.levelBadgeText}>Lv.{user.level}</Text>
-          </View>
+            </View>
+          ) : (
+            <View style={styles.avatarWrapper}>
+              <DefaultAvatarCircle initial={user.username[0] ?? '?'} levelColor={levelColor} />
+              <View style={[styles.levelBadge, { backgroundColor: levelColor }]}>
+                <Text style={styles.levelBadgeText}>Lv.{user.level}</Text>
+              </View>
+            </View>
+          )}
         </View>
 
         <Text style={[styles.displayName, { color: C.text.primary }]}>{user.displayName}</Text>
         <Text style={[styles.username, { color: C.text.secondary }]}>@{user.username}</Text>
-        <Text style={[styles.avatarNameLabel, { color: C.text.secondary }]}>{displayAvatarEmoji} {displayAvatarName}</Text>
         <Text style={[styles.accountNumber, { color: C.text.tertiary }]}>{formatAccountNumber(user.accountNumber)}</Text>
-
-        {/* Wardrobe button */}
-        <TouchableOpacity
-          style={styles.wardrobeBtn}
-          onPress={() => setWardrobeOpen(true)}
-        >
-          <Text style={styles.wardrobeBtnText}>👗 Wardrobe</Text>
-        </TouchableOpacity>
 
         {/* XP Bar */}
         <View style={styles.xpContainer}>
@@ -220,188 +212,141 @@ export default function ProfileScreen() {
         </View>
       </LinearGradient>
 
-      {/* ── Pet Ability Card (Ultra Legendary only) ── */}
-      {currentAbility && (
-        <View style={[styles.abilityCard, abilityActive && styles.abilityCardActive]}>
-          <View style={styles.abilityRow}>
-            <Text style={styles.abilityIcon}>{currentAbility.icon}</Text>
-            <View style={styles.abilityInfo}>
-              <Text style={styles.abilityName}>{currentAbility.name}</Text>
-              <Text style={styles.abilityDesc}>{currentAbility.description}</Text>
-            </View>
-            <View style={styles.abilityBtns}>
-              {/* Info button — opens full explanation */}
-              <TouchableOpacity
-                style={styles.abilityInfoBtn}
-                onPress={() => setAbilityInfoVisible(true)}
-              >
-                <Text style={styles.abilityInfoBtnText}>ℹ️</Text>
-              </TouchableOpacity>
-              {isPassiveAbility ? (
-                <View style={[styles.abilityBtn, abilityActive && styles.abilityBtnActive]}>
-                  <Text style={[styles.abilityBtnText, !abilityActive && { color: C.text.tertiary }]}>
-                    {abilityActive ? '🍀 Active' : rolledToday ? '🎲 Rolled' : '🎲 Auto'}
-                  </Text>
-                </View>
-              ) : (
+      {/* Tab Switcher */}
+      <View style={styles.tabSwitcher}>
+        <TouchableOpacity
+          style={[styles.tabPill, activeProfileTab === 'profile' && { backgroundColor: tabColor }]}
+          onPress={() => setActiveProfileTab('profile')}
+        >
+          <Text style={[styles.tabPillText, { color: activeProfileTab === 'profile' ? '#fff' : C.text.secondary }]}>
+            Profile
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabPill, activeProfileTab === 'wardrobe' && { backgroundColor: tabColor }]}
+          onPress={() => setActiveProfileTab('wardrobe')}
+        >
+          <Text style={[styles.tabPillText, { color: activeProfileTab === 'wardrobe' ? '#fff' : C.text.secondary }]}>
+            Wardrobe
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeProfileTab === 'wardrobe' ? (
+        <View style={styles.wardrobeContainer}>
+          {/* Avatar Preview */}
+          <View style={[styles.wardrobePreviewCard, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <AvatarPreview config={localConfig} size="lg" />
+          </View>
+
+          {/* Skin Tone */}
+          <View style={[styles.wardrobeSection, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.wardrobeSectionTitle, { color: C.text.primary }]}>Skin Tone</Text>
+            <View style={styles.swatchRow}>
+              {SKIN_TONES.map((color, i) => (
                 <TouchableOpacity
+                  key={i}
+                  onPress={() => updateConfig('skinTone', i)}
                   style={[
-                    styles.abilityBtn,
-                    abilityActive      && styles.abilityBtnActive,
-                    abilityOnCooldown  && styles.abilityBtnCooldown,
+                    styles.colorSwatch,
+                    { backgroundColor: color },
+                    localConfig.skinTone === i && { borderColor: tabColor, borderWidth: 3 },
                   ]}
-                  onPress={() => setAbilityInfoVisible(true)}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Hair Style */}
+          <View style={[styles.wardrobeSection, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.wardrobeSectionTitle, { color: C.text.primary }]}>Hair Style</Text>
+            <View style={styles.chipRow}>
+              {HAIR_STYLE_LABELS.map((label, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => updateConfig('hairStyle', i)}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: C.bg.tertiary, borderColor: C.border.default },
+                    localConfig.hairStyle === i && { backgroundColor: `${tabColor}22`, borderColor: tabColor },
+                  ]}
                 >
-                  <Text style={[
-                    styles.abilityBtnText,
-                    (abilityActive || abilityOnCooldown) && { color: C.text.tertiary },
-                  ]}>
-                    {abilityActive ? '⚡ Active' : abilityOnCooldown ? '⏳' : 'Activate'}
+                  <Text style={[styles.chipText, { color: localConfig.hairStyle === i ? tabColor : C.text.secondary }]}>
+                    {label}
                   </Text>
                 </TouchableOpacity>
-              )}
+              ))}
             </View>
           </View>
-          {abilityActive && (
-            <View style={styles.abilityTimerRow}>
-              <Text style={[styles.abilityTimerLabel, { color: C.text.secondary }]}>⏱ Active for</Text>
-              <Text style={styles.abilityTimerValue}>{fmtDuration(activeRemainingMs)}</Text>
+
+          {/* Hair Colour */}
+          <View style={[styles.wardrobeSection, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.wardrobeSectionTitle, { color: C.text.primary }]}>Hair Colour</Text>
+            <View style={styles.swatchRow}>
+              {HAIR_COLORS.map((color, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => updateConfig('hairColor', i)}
+                  style={[
+                    styles.colorSwatch,
+                    { backgroundColor: color },
+                    localConfig.hairColor === i && { borderColor: tabColor, borderWidth: 3 },
+                  ]}
+                />
+              ))}
             </View>
-          )}
-          {abilityOnCooldown && (
-            <View style={styles.abilityTimerRow}>
-              <Text style={[styles.abilityTimerLabel, { color: C.text.secondary }]}>🔒 Ready in</Text>
-              <Text style={styles.abilityTimerValue}>{fmtDuration(cooldownRemainingMs)}</Text>
+          </View>
+
+          {/* Eye Colour */}
+          <View style={[styles.wardrobeSection, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.wardrobeSectionTitle, { color: C.text.primary }]}>Eye Colour</Text>
+            <View style={styles.swatchRow}>
+              {EYE_COLORS.map((color, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => updateConfig('eyeColor', i)}
+                  style={[
+                    styles.colorSwatch,
+                    { backgroundColor: color },
+                    localConfig.eyeColor === i && { borderColor: tabColor, borderWidth: 3 },
+                  ]}
+                />
+              ))}
             </View>
-          )}
-          {isPassiveAbility ? (
-            abilityActive ? null : rolledToday ? (
-              <View style={styles.abilityTimerRow}>
-                <Text style={[styles.abilityTimerLabel, { color: C.text.secondary }]}>⏰ Next roll in</Text>
-                <Text style={styles.abilityTimerValue}>{fmtDuration(nextRollMs)}</Text>
-              </View>
-            ) : (
-              <Text style={[styles.abilityCooldownHint, { color: C.text.tertiary }]}>
-                Auto-rolls on your next trade · 5% chance to 2× earnings
-              </Text>
-            )
-          ) : (
-            !abilityActive && !abilityOnCooldown && (
-              <Text style={[styles.abilityCooldownHint, { color: C.text.tertiary }]}>
-                Cooldown: {currentAbility.cooldownLabel} · Duration: {currentAbility.durationLabel}
-              </Text>
-            )
-          )}
+          </View>
+
+          {/* Outfit Colour */}
+          <View style={[styles.wardrobeSection, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
+            <Text style={[styles.wardrobeSectionTitle, { color: C.text.primary }]}>Outfit Colour</Text>
+            <View style={styles.swatchRow}>
+              {OUTFIT_COLORS.map((color, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => updateConfig('outfitColor', i)}
+                  style={[
+                    styles.colorSwatch,
+                    { backgroundColor: color },
+                    localConfig.outfitColor === i && { borderColor: tabColor, borderWidth: 3 },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Save Button */}
+          <TouchableOpacity onPress={handleSaveAvatar} disabled={savingAvatar} style={styles.saveAvatarBtn}>
+            <LinearGradient
+              colors={[tabColor, `${tabColor}BB`] as any}
+              style={styles.saveAvatarGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={styles.saveAvatarText}>{savingAvatar ? 'Saving…' : 'Save Avatar'}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-      )}
-
-      {/* ── Ability Info Modal ── */}
-      {currentAbility && (
-        <Modal
-          visible={abilityInfoVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setAbilityInfoVisible(false)}
-        >
-          <View style={styles.abilityModalOverlay}>
-            <View style={styles.abilityModalCard}>
-              {/* Header gradient strip */}
-              <LinearGradient
-                colors={['#1A0A3A', '#0D1830']}
-                style={styles.abilityModalHeader}
-              >
-                <View style={styles.abilityModalIconRing}>
-                  <Text style={styles.abilityModalIconEmoji}>{currentAbility.icon}</Text>
-                </View>
-                <View style={[styles.abilityModalTierBadge, { backgroundColor: '#8B5CF620' }]}>
-                  <Text style={[styles.abilityModalTierText, { color: '#8B5CF6' }]}>
-                    ⚡ ULTRA LEGENDARY ABILITY
-                  </Text>
-                </View>
-              </LinearGradient>
-
-              <View style={styles.abilityModalBody}>
-                {/* Ability name */}
-                <Text style={styles.abilityModalName}>{currentAbility.name}</Text>
-
-                {/* Description */}
-                <View style={styles.abilityModalDescBox}>
-                  <Text style={[styles.abilityModalDescText, { color: C.text.primary }]}>{currentAbility.description}</Text>
-                </View>
-
-                {/* Stats grid */}
-                <View style={styles.abilityModalStats}>
-                  {!isPassiveAbility && (
-                    <>
-                      <View style={styles.abilityModalStat}>
-                        <Text style={styles.abilityModalStatIcon}>⏱</Text>
-                        <Text style={[styles.abilityModalStatLabel, { color: C.text.tertiary }]}>Duration</Text>
-                        <Text style={[styles.abilityModalStatValue, { color: C.text.primary }]}>{currentAbility.durationLabel}</Text>
-                      </View>
-                      <View style={styles.abilityModalStatDivider} />
-                      <View style={styles.abilityModalStat}>
-                        <Text style={styles.abilityModalStatIcon}>🔄</Text>
-                        <Text style={[styles.abilityModalStatLabel, { color: C.text.tertiary }]}>Cooldown</Text>
-                        <Text style={[styles.abilityModalStatValue, { color: C.text.primary }]}>{currentAbility.cooldownLabel}</Text>
-                      </View>
-                    </>
-                  )}
-                  {isPassiveAbility && (
-                    <View style={styles.abilityModalStat}>
-                      <Text style={styles.abilityModalStatIcon}>🎲</Text>
-                      <Text style={[styles.abilityModalStatLabel, { color: C.text.tertiary }]}>Type</Text>
-                      <Text style={[styles.abilityModalStatValue, { color: C.text.primary }]}>Passive · Auto-rolls on trade</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Status indicator */}
-                <View style={[
-                  styles.abilityModalStatus,
-                  abilityActive && styles.abilityModalStatusActive,
-                  abilityOnCooldown && styles.abilityModalStatusCooldown,
-                ]}>
-                  <Text style={[styles.abilityModalStatusText, { color: C.text.primary }]}>
-                    {abilityActive
-                      ? `⚡ Active · ${fmtDuration(activeRemainingMs)} remaining`
-                      : abilityOnCooldown
-                        ? `⏳ Cooldown · Ready in ${fmtDuration(cooldownRemainingMs)}`
-                        : isPassiveAbility
-                          ? rolledToday ? '🎲 Already rolled today' : '🍀 Ready to roll'
-                          : '✅ Ready to activate'}
-                  </Text>
-                </View>
-
-                {/* Action buttons */}
-                <View style={styles.abilityModalActions}>
-                  {!isPassiveAbility && !abilityActive && !abilityOnCooldown && (
-                    <TouchableOpacity
-                      style={styles.abilityModalActivateBtn}
-                      onPress={() => { handleActivateAbility(); setAbilityInfoVisible(false); }}
-                    >
-                      <LinearGradient
-                        colors={['#8B5CF6', '#6D28D9']}
-                        style={styles.abilityModalActivateGrad}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                      >
-                        <Text style={styles.abilityModalActivateText}>⚡ Activate Now</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    style={styles.abilityModalCloseBtn}
-                    onPress={() => setAbilityInfoVisible(false)}
-                  >
-                    <Text style={styles.abilityModalCloseBtnText}>Close</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
-
+      ) : (
+        <>
       {/* Stats */}
       <View style={styles.statsGrid}>
         <StatCard
@@ -465,8 +410,6 @@ export default function ProfileScreen() {
       <SectionHeader title="XP Levels" icon="⭐" />
       <View style={styles.levelsList}>
         {LEVELS.map(lvl => {
-          const gainPctForLevel = (lvl.level - 1) * 5;
-          const blingReward = gainPctForLevel > 0 ? blingAtMilestone(gainPctForLevel) : 0;
           const isCurrentLevel = user.level === lvl.level;
           const isUnlocked = (user.xp || 0) >= lvl.xpRequired;
           return (
@@ -486,19 +429,13 @@ export default function ProfileScreen() {
                   {lvl.title}
                 </Text>
                 <Text style={[styles.levelSubtitle, { color: C.text.tertiary }]}>
-                  {lvl.xpRequired === 0 ? 'Starting level' : `${lvl.xpRequired} XP · +${gainPctForLevel}% portfolio`}
+                  {lvl.xpRequired === 0 ? 'Starting level' : `${lvl.xpRequired} XP`}
                 </Text>
               </View>
               <View style={styles.levelRight}>
                 <View style={[styles.levelBadgePill, { backgroundColor: `${lvl.color}22` }]}>
                   <Text style={[styles.levelBadgePillText, { color: lvl.color }]}>Lv.{lvl.level}</Text>
                 </View>
-                {blingReward > 0 && (
-                  <View style={styles.levelBlingRow}>
-                    <Text style={styles.levelBlingText}>+{blingReward}</Text>
-                    <Text style={styles.levelBlingIcon}>💎</Text>
-                  </View>
-                )}
               </View>
               {isCurrentLevel && (
                 <View style={[styles.currentLevelBar, { backgroundColor: lvl.color }]} />
@@ -520,10 +457,6 @@ export default function ProfileScreen() {
           right={<Switch value={true} trackColor={{ true: Colors.brand.primary }} thumbColor="#fff" />}
         />
         <SettingsRow
-          label="Country"
-          right={<Text style={[styles.settingsValue, { color: C.text.secondary }]}>{user.country}</Text>}
-        />
-        <SettingsRow
           label="Account Number"
           right={<Text style={[styles.settingsValue, { color: C.text.secondary }]}>{formatAccountNumber(user.accountNumber)}</Text>}
         />
@@ -540,94 +473,9 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       <Text style={[styles.version, { color: C.text.tertiary }]}>CapitalQuest v1.0.0 · Virtual trading only · No real money involved</Text>
+        </>
+      )}
     </ScrollView>
-
-    {/* ── Wardrobe Modal ── */}
-    <Modal
-      visible={wardrobeOpen}
-      animationType="slide"
-      transparent
-      onRequestClose={() => setWardrobeOpen(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: C.text.primary }]}>👗 Wardrobe</Text>
-            <TouchableOpacity onPress={() => setWardrobeOpen(false)}>
-              <Text style={styles.modalClose}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Avatars */}
-            <Text style={[styles.wardrobeSection, { color: C.text.primary }]}>🎨 Avatars</Text>
-            <View style={styles.wardrobeGrid}>
-              {[...unlockedTrophyAvatars, ...ownedShopAvatars].map((item, idx) => {
-                const isTrophy = 'gainThreshold' in item;
-                const id = isTrophy ? `trophy:${(item as TrophyReward).gainThreshold}` : (item as ShopItem).id;
-                // Active if explicitly equipped, or if it's the default (highest unlocked trophy) and nothing is equipped
-                const isDefault = isTrophy && !equippedAvatarId && (item as TrophyReward).gainThreshold === defaultAvatar.gainThreshold;
-                const active = equippedAvatarId === id || isDefault;
-                const tierColor = isTrophy ? (item as TrophyReward).color : TIER_COLORS[(item as ShopItem).tier];
-                return (
-                  <TouchableOpacity
-                    key={id + idx}
-                    style={[styles.wardrobeItem, active && { borderColor: tierColor }]}
-                    onPress={() => setEquippedAvatarId(active ? null : id)}
-                  >
-                    <Text style={styles.wardrobeEmoji}>{item.emoji}</Text>
-                    <Text style={[styles.wardrobeName, { color: C.text.secondary }]} numberOfLines={1}>{item.name}</Text>
-                    {active && <View style={[styles.wardrobeCheck, { backgroundColor: tierColor }]}>
-                      <Text style={styles.wardrobeCheckText}>✓</Text>
-                    </View>}
-                    {!isTrophy && (
-                      <View style={[styles.wardrobeTierBadge, { backgroundColor: tierColor }]}>
-                        <Text style={styles.wardrobeTierText}>{TIER_LABELS[(item as ShopItem).tier].split(' ')[0]}</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Pets */}
-            <Text style={[styles.wardrobeSection, { color: C.text.primary }]}>🐾 Pets</Text>
-            {[...unlockedTrophyPets, ...ownedShopPets].length === 0 ? (
-              <Text style={[styles.wardrobeEmpty, { color: C.text.tertiary }]}>Reach +10% portfolio gain to unlock your first pet!</Text>
-            ) : (
-              <View style={styles.wardrobeGrid}>
-                {[...unlockedTrophyPets, ...ownedShopPets].map((item, idx) => {
-                  const isTrophy = 'gainThreshold' in item;
-                  const id = isTrophy ? `trophy:${(item as TrophyReward).gainThreshold}` : (item as ShopItem).id;
-                  const isDefault = isTrophy && !equippedPetId && defaultPet && (item as TrophyReward).gainThreshold === defaultPet.gainThreshold;
-                  const active = equippedPetId === id || !!isDefault;
-                  const tierColor = isTrophy ? (item as TrophyReward).color : TIER_COLORS[(item as ShopItem).tier];
-                  return (
-                    <TouchableOpacity
-                      key={id + idx}
-                      style={[styles.wardrobeItem, active && { borderColor: tierColor }]}
-                      onPress={() => setEquippedPetId(active ? null : id)}
-                    >
-                      <Text style={styles.wardrobeEmoji}>{item.emoji}</Text>
-                      <Text style={[styles.wardrobeName, { color: C.text.secondary }]} numberOfLines={1}>{item.name}</Text>
-                      {active && <View style={[styles.wardrobeCheck, { backgroundColor: tierColor }]}>
-                        <Text style={styles.wardrobeCheckText}>✓</Text>
-                      </View>}
-                      {!isTrophy && (
-                        <View style={[styles.wardrobeTierBadge, { backgroundColor: tierColor }]}>
-                          <Text style={styles.wardrobeTierText}>{TIER_LABELS[(item as ShopItem).tier].split(' ')[0]}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-            <View style={{ height: 40 }} />
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
 
     {/* ── Delete Account Confirmation ── */}
     <Modal
@@ -822,29 +670,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   avatarContainer: { position: 'relative', marginBottom: 8 },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarEmoji: {
-    fontSize: 36,
-  },
-  petBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.bg.primary,
-  },
-  petBadgeEmoji: { fontSize: 14 },
+  avatarWrapper: { position: 'relative' },
   levelBadge: {
     position: 'absolute',
     bottom: -4,
@@ -923,8 +749,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingBottom: Spacing.sm,
   },
-
-  // ── XP Levels ──────────────────────────────────────────────────────────────
   levelsList: {
     gap: 6,
     paddingHorizontal: Spacing.base,
@@ -973,17 +797,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: FontWeight.extrabold,
   },
-  levelBlingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  levelBlingText: {
-    fontSize: 11,
-    fontWeight: FontWeight.bold,
-    color: Colors.brand.gold,
-  },
-  levelBlingIcon: { fontSize: 11 },
   currentLevelBar: {
     position: 'absolute',
     left: 0,
@@ -1083,351 +896,90 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     paddingHorizontal: Spacing.xl,
   },
-
-  // Bling badge (top-right of header)
-  blingBadge: {
-    position: 'absolute',
-    top: 54,
-    right: Spacing.base,
+  // ─── Tab Switcher ───────────────────────────────────────────────────────────
+  tabSwitcher: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: `${Colors.brand.gold}22`,
-    borderRadius: Radius.full,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: `${Colors.brand.gold}55`,
-  },
-  blingEmoji: { fontSize: 14 },
-  blingText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.brand.gold,
-  },
-
-  // Avatar name under username
-  avatarNameLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.brand.accent,
-    fontWeight: FontWeight.semibold,
-    marginTop: 2,
-  },
-
-  // Wardrobe button
-  wardrobeBtn: {
-    marginTop: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.bg.tertiary,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-  },
-  wardrobeBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text.primary,
-  },
-
-  // Wardrobe modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
+    marginHorizontal: Spacing.base,
+    marginTop: Spacing.base,
+    marginBottom: Spacing.sm,
     backgroundColor: Colors.bg.secondary,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '80%',
-    paddingBottom: 32,
+    borderRadius: Radius.full,
+    padding: 4,
+    gap: 4,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  tabPill: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
     alignItems: 'center',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.default,
   },
-  modalTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.text.primary,
-  },
-  modalClose: { fontSize: 20, color: Colors.text.secondary, padding: 4 },
-
-  wardrobeSection: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
-    color: Colors.text.primary,
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing.sm,
-  },
-  wardrobeEmpty: {
+  tabPillText: {
     fontSize: FontSize.sm,
-    color: Colors.text.tertiary,
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.base,
-    fontStyle: 'italic',
+    fontWeight: FontWeight.semibold,
   },
-  wardrobeGrid: {
+  // ─── Wardrobe ───────────────────────────────────────────────────────────────
+  wardrobeContainer: {
+    paddingHorizontal: Spacing.base,
+    paddingBottom: Spacing.xl,
+    gap: 12,
+  },
+  wardrobePreviewCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.xl,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+  },
+  wardrobeSection: {
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    gap: 12,
+  },
+  wardrobeSectionTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+  },
+  swatchRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    paddingHorizontal: Spacing.base,
   },
-  wardrobeItem: {
-    width: 80,
-    alignItems: 'center',
-    backgroundColor: Colors.bg.tertiary,
-    borderRadius: Radius.lg,
-    padding: 8,
+  colorSwatch: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 2,
-    borderColor: Colors.border.default,
-    position: 'relative',
+    borderColor: 'transparent',
   },
-  wardrobeEmoji: { fontSize: 32 },
-  wardrobeName: {
-    fontSize: 9,
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    marginTop: 3,
-    width: '100%',
-  },
-  wardrobeCheck: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.bg.secondary,
-  },
-  wardrobeCheckText: { fontSize: 10, color: '#fff', fontWeight: FontWeight.bold },
-  wardrobeTierBadge: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    borderTopLeftRadius: Radius.lg - 1,
-    borderTopRightRadius: Radius.lg - 1,
-    paddingVertical: 2,
-    alignItems: 'center',
-  },
-  wardrobeTierText: { fontSize: 7, color: '#fff', fontWeight: FontWeight.extrabold, letterSpacing: 0.5 },
-
-  // Pet ability card
-  abilityCard: {
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.sm,
-    backgroundColor: Colors.bg.secondary,
-    borderRadius: Radius.lg,
-    padding: Spacing.base,
-    borderWidth: 1.5,
-    borderColor: `${Colors.brand.accent}44`,
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
-  abilityCardActive: {
-    borderColor: Colors.brand.accent,
-    backgroundColor: `${Colors.brand.accent}12`,
-  },
-  abilityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  abilityIcon: { fontSize: 28 },
-  abilityInfo: { flex: 1, gap: 2 },
-  abilityName: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.brand.accent,
-  },
-  abilityDesc: { fontSize: FontSize.xs, color: Colors.text.secondary },
-  abilityBtn: {
+  chip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: Radius.full,
-    backgroundColor: Colors.brand.accent,
-  },
-  abilityBtnActive:   { backgroundColor: `${Colors.brand.accent}55` },
-  abilityBtnCooldown: { backgroundColor: Colors.bg.tertiary },
-  abilityBtnText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: '#fff' },
-  abilityBtnTextDim: { color: Colors.text.tertiary },
-  abilityTimerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.default,
-  },
-  abilityTimerLabel: { fontSize: FontSize.xs, color: Colors.text.secondary },
-  abilityTimerValue: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.brand.accent },
-  abilityCooldownHint: {
-    fontSize: FontSize.xs,
-    color: Colors.text.tertiary,
-    textAlign: 'center',
-    paddingTop: 2,
-  },
-
-  // Ability buttons row (info + activate side by side)
-  abilityBtns: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  abilityInfoBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.bg.tertiary,
     borderWidth: 1,
-    borderColor: Colors.border.default,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  abilityInfoBtnText: { fontSize: 16 },
-
-  // Ability Info Modal
-  abilityModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  abilityModalCard: {
-    width: '100%',
-    backgroundColor: Colors.bg.secondary,
-    borderRadius: Radius.xl,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: '#8B5CF666',
-  },
-  abilityModalHeader: {
-    alignItems: 'center',
-    paddingTop: 32,
-    paddingBottom: 20,
-    gap: 12,
-  },
-  abilityModalIconRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#8B5CF620',
-    borderWidth: 2,
-    borderColor: '#8B5CF666',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  abilityModalIconEmoji: { fontSize: 36 },
-  abilityModalTierBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: '#8B5CF644',
-  },
-  abilityModalTierText: {
-    fontSize: 10,
-    fontWeight: FontWeight.extrabold,
-    letterSpacing: 0.8,
-  },
-  abilityModalBody: {
-    padding: 20,
-    gap: 14,
-  },
-  abilityModalName: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.brand.accent,
-    textAlign: 'center',
-  },
-  abilityModalDescBox: {
-    backgroundColor: Colors.bg.tertiary,
-    borderRadius: Radius.md,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-  },
-  abilityModalDescText: {
+  chipText: {
     fontSize: FontSize.sm,
-    color: Colors.text.primary,
-    lineHeight: 20,
-    textAlign: 'center',
+    fontWeight: FontWeight.medium,
   },
-  abilityModalStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.bg.tertiary,
-    borderRadius: Radius.md,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-  },
-  abilityModalStat: { flex: 1, alignItems: 'center', gap: 4 },
-  abilityModalStatDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: Colors.border.default,
-    marginHorizontal: 8,
-  },
-  abilityModalStatIcon: { fontSize: 18 },
-  abilityModalStatLabel: { fontSize: FontSize.xs, color: Colors.text.tertiary },
-  abilityModalStatValue: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.text.primary,
-    textAlign: 'center',
-  },
-  abilityModalStatus: {
-    padding: 10,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bg.tertiary,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-    alignItems: 'center',
-  },
-  abilityModalStatusActive: {
-    backgroundColor: `${Colors.brand.accent}15`,
-    borderColor: `${Colors.brand.accent}55`,
-  },
-  abilityModalStatusCooldown: {
-    backgroundColor: `${Colors.text.tertiary}15`,
-    borderColor: Colors.border.default,
-  },
-  abilityModalStatusText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text.secondary,
-  },
-  abilityModalActions: { gap: 10 },
-  abilityModalActivateBtn: {
+  saveAvatarBtn: {
     borderRadius: Radius.lg,
     overflow: 'hidden',
+    marginTop: 4,
   },
-  abilityModalActivateGrad: {
+  saveAvatarGradient: {
     paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  abilityModalActivateText: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.extrabold,
-    color: '#fff',
-    letterSpacing: 0.3,
-  },
-  abilityModalCloseBtn: {
-    paddingVertical: 12,
-    alignItems: 'center',
     borderRadius: Radius.lg,
-    backgroundColor: Colors.bg.tertiary,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
   },
-  abilityModalCloseBtnText: {
+  saveAvatarText: {
+    color: '#fff',
     fontSize: FontSize.base,
-    fontWeight: FontWeight.semibold,
-    color: Colors.text.secondary,
+    fontWeight: FontWeight.bold,
   },
 });

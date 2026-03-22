@@ -181,13 +181,7 @@ export default function AppLayout() {
           tabBarIcon: ({ focused }) => <TabIcon icon="🎖️" focused={focused} bgColor="rgba(255, 200, 120, 0.35)" />,
         }}
       />
-      <Tabs.Screen
-        name="shop"
-        options={{
-          title: 'Shop',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🛒" focused={focused} bgColor="rgba(120, 230, 240, 0.35)" />,
-        }}
-      />
+      <Tabs.Screen name="shop" options={{ href: null }} />
       <Tabs.Screen
         name="profile"
         options={{
@@ -224,7 +218,7 @@ function TabIcon({
 }) {
   return (
     <View style={[styles.tabIconWrap, focused && { backgroundColor: bgColor }]}>
-      <Text style={[styles.tabIconEmoji, { opacity: focused ? 1 : 0.50 }]}>{icon}</Text>
+      <Text style={[styles.tabIconEmoji, { opacity: focused ? 1 : 0.70 }]}>{icon}</Text>
     </View>
   );
 }
@@ -248,18 +242,18 @@ function CenterTabButton({ onPress, accessibilityState }: any) {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: Colors.bg.secondary,
-    borderTopColor: Colors.border.default,
-    borderTopWidth: 1,
-    height: 52,
-    paddingBottom: 4,
-    paddingTop: 3,
+    borderTopColor: 'rgba(255,255,255,0.15)',
+    borderTopWidth: 1.5,
+    height: 72,
+    paddingBottom: 10,
+    paddingTop: 6,
   },
   tabItem: {
     paddingHorizontal: 0,
     minWidth: 0,
   },
   tabLabel: {
-    fontSize: 6.5,
+    fontSize: 10,
     fontWeight: FontWeight.medium,
   },
   // Center home tab — sits inside the bar, no overlap
@@ -273,18 +267,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: Colors.border.default,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     alignItems: 'center',
-    minWidth: 46,
+    minWidth: 52,
   },
   centerTabBoxActive: {
     backgroundColor: Colors.brand.primary,
     borderColor: Colors.brand.primary,
   },
-  centerTabIcon: { fontSize: 15 },
+  centerTabIcon: { fontSize: 20 },
   centerTabLabel: {
-    fontSize: 7,
+    fontSize: 10,
     fontWeight: FontWeight.bold,
     marginTop: 1,
   },
@@ -309,5 +303,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIconEmoji: { fontSize: 13 },
+  tabIconEmoji: { fontSize: 20 },
 });

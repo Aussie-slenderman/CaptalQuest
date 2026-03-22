@@ -66,27 +66,6 @@ interface AppState {
   localLeaderboard: LeaderboardEntry[];
   setLocalLeaderboard: (entries: LeaderboardEntry[]) => void;
 
-  // Bling (in-game currency) + Shop
-  bling: number;
-  setBling: (n: number) => void;
-  addBling: (n: number) => void;
-  shopPurchases: string[]; // item IDs owned
-  addShopPurchase: (id: string) => void;
-  claimedMilestones: number[]; // gain% milestones already awarded bling
-  addClaimedMilestone: (gainPct: number) => void;
-
-  // Wardrobe — equipped cosmetics (item ID or 'trophy:gainPct' for trophy rewards)
-  equippedAvatarId: string | null;
-  setEquippedAvatarId: (id: string | null) => void;
-  equippedPetId: string | null;
-  setEquippedPetId: (id: string | null) => void;
-
-  // Pet special abilities
-  petAbilityActiveUntil: number | null;       // ms timestamp when current buff expires
-  setPetAbilityActiveUntil: (ts: number | null) => void;
-  petAbilityLastUsed: Record<string, number>; // petId → ms timestamp of last activation
-  setPetAbilityLastUsed: (petId: string, ts: number) => void;
-
   // App Theme Settings
   appColorMode: 'dark' | 'light';
   setAppColorMode: (mode: 'dark' | 'light') => void;
@@ -203,40 +182,6 @@ export const useAppStore = create<AppState>((set) => ({
   localLeaderboard: [],
   setLocalLeaderboard: (localLeaderboard) => set({ localLeaderboard }),
 
-  // Bling + Shop
-  bling: 0,
-  setBling: (bling) => set({ bling }),
-  addBling: (amount) => set((state) => ({ bling: state.bling + amount })),
-  shopPurchases: [],
-  addShopPurchase: (id) =>
-    set((state) => ({
-      shopPurchases: state.shopPurchases.includes(id)
-        ? state.shopPurchases
-        : [...state.shopPurchases, id],
-    })),
-  claimedMilestones: [],
-  addClaimedMilestone: (gainPct) =>
-    set((state) => ({
-      claimedMilestones: state.claimedMilestones.includes(gainPct)
-        ? state.claimedMilestones
-        : [...state.claimedMilestones, gainPct],
-    })),
-
-  // Wardrobe
-  equippedAvatarId: null,
-  setEquippedAvatarId: (equippedAvatarId) => set({ equippedAvatarId }),
-  equippedPetId: null,
-  setEquippedPetId: (equippedPetId) => set({ equippedPetId }),
-
-  // Pet abilities
-  petAbilityActiveUntil: null,
-  setPetAbilityActiveUntil: (petAbilityActiveUntil) => set({ petAbilityActiveUntil }),
-  petAbilityLastUsed: {},
-  setPetAbilityLastUsed: (petId, ts) =>
-    set((state) => ({
-      petAbilityLastUsed: { ...state.petAbilityLastUsed, [petId]: ts },
-    })),
-
   // App Theme Settings
   appColorMode: 'dark',
   setAppColorMode: (appColorMode) => set({ appColorMode }),
@@ -250,7 +195,6 @@ export const useAppStore = create<AppState>((set) => ({
     social: '#EC4899',
     advisor: '#00D4AA',
     trade: '#00C853',
-    shop: '#F59E0B',
     profile: '#7C3AED',
   },
   setAppTabColor: (tab, color) =>

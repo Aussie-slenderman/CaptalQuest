@@ -12,7 +12,7 @@ interface AppHeaderProps {
 export default function AppHeader({ title }: AppHeaderProps) {
   const {
     notifications, unreadCount,
-    bling, appColorMode,
+    appColorMode,
     isSidebarOpen, setSidebarOpen,
   } = useAppStore();
 
@@ -22,25 +22,13 @@ export default function AppHeader({ title }: AppHeaderProps) {
   const unreadNotifs =
     notifications.filter(n => !n.read).length + (unreadCount ?? 0);
 
-  const formatBling = (n: number) => {
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-    if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
-    return n.toString();
-  };
-
   return (
     <View style={[styles.header, { backgroundColor: C.bg.primary, borderBottomColor: C.border.default }]}>
       {/* Left: screen title */}
       <Text style={[styles.title, { color: C.text.primary }]} numberOfLines={1}>{title}</Text>
 
-      {/* Right: bling → bell → hamburger */}
+      {/* Right: bell → hamburger */}
       <View style={styles.right}>
-
-        {/* 💎 Bling counter */}
-        <View style={[styles.blingPill, { backgroundColor: C.bg.tertiary, borderColor: C.border.default }]}>
-          <Text style={styles.blingGem}>💎</Text>
-          <Text style={styles.blingText}>{formatBling(bling ?? 0)}</Text>
-        </View>
 
         {/* 🔔 Bell */}
         <TouchableOpacity
@@ -94,25 +82,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-
-  // Bling pill
-  blingPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.bg.tertiary,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-  },
-  blingGem:  { fontSize: 13 },
-  blingText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.brand.gold,
   },
 
   // Icon buttons

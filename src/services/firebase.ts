@@ -72,12 +72,12 @@ export const rtdb = getDatabase(app);
 // ─── Auth Helpers ─────────────────────────────────────────────────────────────
 
 export async function registerUser(
-  email: string,
-  password: string,
   username: string,
+  password: string,
   displayName: string,
   country: string
 ) {
+  const email = username + '@capitalquest.app';
   const cred = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(cred.user, { displayName });
 
@@ -101,6 +101,7 @@ export async function registerUser(
     lastActive: Date.now(),
     onboardingComplete: false,
     startingBalance: 0,
+    avatarConfig: null,
   };
 
   await setDoc(doc(db, 'users', cred.user.uid), userData);

@@ -9,6 +9,8 @@ export default function AuthLayout() {
         contentStyle: { backgroundColor: Colors.bg.primary },
         animation: 'slide_from_right',
       }}
-    />
+    >
+      <Stack.Screen name="avatar" options={{ headerShown: false }} />
+    </Stack>
   );
 }

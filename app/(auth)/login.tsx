@@ -9,21 +9,21 @@ import { loginUser } from '../../src/services/auth';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
     setError('');
-    if (!email.trim()) { setError('Please enter your email address.'); return; }
+    if (!username.trim()) { setError('Please enter your username.'); return; }
     if (!password) { setError('Please enter your password.'); return; }
     setLoading(true);
     try {
-      await loginUser(email.trim(), password);
+      await loginUser(`${username.trim().toLowerCase()}@capitalquest.app`, password);
       // Navigation handled by auth state listener in _layout.tsx
     } catch (e: unknown) {
-      setError((e as { message?: string }).message || 'Invalid email or password.');
+      setError((e as { message?: string }).message || 'Invalid username or password.');
       setLoading(false);
     }
   };
@@ -56,14 +56,14 @@ export default function LoginScreen() {
 
         <View style={styles.form}>
           <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Username</Text>
             <TextInput
               style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="john@email.com"
+              value={username}
+              onChangeText={setUsername}
+              placeholder="your_username"
               placeholderTextColor={Colors.text.tertiary}
-              keyboardType="email-address"
+              keyboardType="default"
               autoCapitalize="none"
             />
           </View>

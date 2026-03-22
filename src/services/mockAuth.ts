@@ -92,18 +92,18 @@ export function mockOnAuthChange(callback: Listener) {
 }
 
 export async function mockRegister(
-  email: string,
-  _password: string,
   username: string,
+  _password: string,
   displayName: string,
   country: string
 ) {
+  const email = username + '@capitalquest.app';
   const users = getCollection('users') as Record<string, unknown>;
 
   const exists = Object.values(users).find(
     (u: unknown) => (u as Record<string, string>).email === email
   );
-  if (exists) throw new Error('An account with this email already exists.');
+  if (exists) throw new Error('An account with this username already exists.');
 
   const usernameTaken = Object.values(users).find(
     (u: unknown) => (u as Record<string, string>).username === username
@@ -119,6 +119,7 @@ export async function mockRegister(
     clubIds: [], friendIds: [], country,
     createdAt: Date.now(), lastActive: Date.now(),
     onboardingComplete: false, startingBalance: 0,
+    avatarConfig: null,
   };
 
   setDocument('users', uid, userData);

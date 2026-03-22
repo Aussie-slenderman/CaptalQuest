@@ -8,19 +8,12 @@ import { router } from 'expo-router';
 import { registerUser } from '../../src/services/auth';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constants/theme';
 
-const COUNTRIES = [
-  'United States', 'United Kingdom', 'Canada', 'Australia',
-  'Germany', 'Japan', 'France', 'Brazil', 'India', 'Other',
-];
-
 export default function RegisterScreen() {
   const [form, setForm] = useState({
-    email: '', password: '', confirmPassword: '',
-    username: '', displayName: '', country: 'United States',
+    username: '', password: '', confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
 
   const update = (key: string, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -30,24 +23,22 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     setError('');
 
-    if (!form.displayName.trim()) { setError('Please enter your display name.'); return; }
     if (!form.username.trim()) { setError('Please enter a username.'); return; }
     if (form.username.length < 3) { setError('Username must be at least 3 characters.'); return; }
-    if (!form.email.trim()) { setError('Please enter your email address.'); return; }
     if (!form.password) { setError('Please enter a password.'); return; }
     if (form.password.length < 6) { setError('Password must be at least 6 characters.'); return; }
     if (form.password !== form.confirmPassword) { setError('Passwords do not match.'); return; }
 
     setLoading(true);
     try {
+      const username = form.username.trim().toLowerCase();
       await registerUser(
-        form.email.trim(),
+        username,
         form.password,
-        form.username.trim().toLowerCase(),
-        form.displayName.trim(),
-        form.country,
+        username,
+        'United States',
       );
-      router.replace('/(auth)/setup');
+      router.replace('/(auth)/avatar');
     } catch (e: unknown) {
       const msg = (e as { message?: string }).message || 'Registration failed. Please try again.';
       setError(msg);
@@ -82,50 +73,15 @@ export default function RegisterScreen() {
         )}
 
         <View style={styles.form}>
-          <Field label="Display Name" value={form.displayName}
-            onChangeText={v => update('displayName', v)} placeholder="Johnathan Smith" />
           <Field label="Username" value={form.username}
             onChangeText={v => update('username', v.toLowerCase().replace(/\s/g, ''))}
             placeholder="johnathansmith" autoCapitalize="none" />
-          <Field label="Email" value={form.email}
-            onChangeText={v => update('email', v)} placeholder="johnathan@email.com"
-            keyboardType="email-address" autoCapitalize="none" />
           <Field label="Password" value={form.password}
             onChangeText={v => update('password', v)} placeholder="Min. 6 characters"
             secureTextEntry />
           <Field label="Confirm Password" value={form.confirmPassword}
             onChangeText={v => update('confirmPassword', v)} placeholder="Re-enter password"
             secureTextEntry />
-
-          {/* Country picker */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Country</Text>
-            <TouchableOpacity
-              style={styles.pickerButton}
-              onPress={() => setShowCountryPicker(v => !v)}
-            >
-              <Text style={styles.pickerText}>{form.country}</Text>
-              <Text style={styles.chevron}>{showCountryPicker ? '▲' : '▼'}</Text>
-            </TouchableOpacity>
-            {showCountryPicker && (
-              <View style={styles.dropdown}>
-                {COUNTRIES.map(c => (
-                  <TouchableOpacity
-                    key={c}
-                    style={styles.dropdownItem}
-                    onPress={() => { update('country', c); setShowCountryPicker(false); }}
-                  >
-                    <Text style={[
-                      styles.dropdownText,
-                      form.country === c && styles.selectedText,
-                    ]}>
-                      {c}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
         </View>
 
         <TouchableOpacity
@@ -230,34 +186,6 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     fontSize: FontSize.base,
   },
-  pickerButton: {
-    backgroundColor: Colors.bg.input,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pickerText: { color: Colors.text.primary, fontSize: FontSize.base },
-  chevron: { color: Colors.text.secondary, fontSize: FontSize.sm },
-  dropdown: {
-    backgroundColor: Colors.bg.tertiary,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-    overflow: 'hidden',
-    marginTop: 4,
-  },
-  dropdownItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.subtle,
-  },
-  dropdownText: { color: Colors.text.primary, fontSize: FontSize.base },
-  selectedText: { color: Colors.brand.primary, fontWeight: FontWeight.semibold },
   registerButton: {
     borderRadius: Radius.lg,
     overflow: 'hidden',

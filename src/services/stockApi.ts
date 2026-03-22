@@ -101,6 +101,88 @@ const MOCK_DB: Record<string, { name: string; price: number; changePercent: numb
   CVS: { name: 'CVS Health Corp', price: 44.77, changePercent: -1.22, sector: 'Healthcare', exchange: 'NYSE', marketCap: 57e9 },
   T: { name: 'AT&T Inc', price: 25.88, changePercent: 0.44, sector: 'Communication Services', exchange: 'NYSE', marketCap: 185e9 },
   VZ: { name: 'Verizon Communications', price: 44.22, changePercent: 0.22, sector: 'Communication Services', exchange: 'NYSE', marketCap: 186e9 },
+  // European stocks
+  ASML: { name: 'ASML Holding NV', price: 712.44, changePercent: -1.22, sector: 'Technology', exchange: 'NASDAQ', marketCap: 280e9 },
+  SAP: { name: 'SAP SE', price: 228.33, changePercent: 0.44, sector: 'Technology', exchange: 'NYSE', marketCap: 279e9 },
+  LVMH: { name: 'LVMH Moët Hennessy', price: 142.55, changePercent: -0.88, sector: 'Consumer Discretionary', exchange: 'EPA', marketCap: 356e9 },
+  TTE: { name: 'TotalEnergies SE', price: 58.22, changePercent: -0.33, sector: 'Energy', exchange: 'EPA', marketCap: 139e9 },
+  SIE: { name: 'Siemens AG', price: 198.44, changePercent: 0.66, sector: 'Industrials', exchange: 'ETR', marketCap: 158e9 },
+  BAS: { name: 'BASF SE', price: 44.77, changePercent: -1.11, sector: 'Materials', exchange: 'ETR', marketCap: 40e9 },
+  ALV: { name: 'Allianz SE', price: 299.55, changePercent: 0.33, sector: 'Financials', exchange: 'ETR', marketCap: 130e9 },
+  DBK: { name: 'Deutsche Bank AG', price: 16.44, changePercent: -0.55, sector: 'Financials', exchange: 'ETR', marketCap: 34e9 },
+  MC: { name: 'LVMH (Paris)', price: 652.44, changePercent: -0.88, sector: 'Consumer Discretionary', exchange: 'EPA', marketCap: 325e9 },
+  OR: { name: "L'Oréal SA", price: 388.22, changePercent: 0.22, sector: 'Consumer Staples', exchange: 'EPA', marketCap: 208e9 },
+  BNP: { name: 'BNP Paribas SA', price: 66.88, changePercent: -0.44, sector: 'Financials', exchange: 'EPA', marketCap: 81e9 },
+  AZN: { name: 'AstraZeneca plc', price: 72.44, changePercent: 0.55, sector: 'Healthcare', exchange: 'NASDAQ', marketCap: 226e9 },
+  GSK: { name: 'GSK plc', price: 37.22, changePercent: -0.33, sector: 'Healthcare', exchange: 'NYSE', marketCap: 75e9 },
+  ULVR: { name: 'Unilever plc', price: 50.33, changePercent: 0.11, sector: 'Consumer Staples', exchange: 'LSE', marketCap: 126e9 },
+  DGE: { name: 'Diageo plc', price: 25.88, changePercent: -0.66, sector: 'Consumer Staples', exchange: 'LSE', marketCap: 65e9 },
+  LLOY: { name: 'Lloyds Banking Group', price: 0.55, changePercent: 0.91, sector: 'Financials', exchange: 'LSE', marketCap: 39e9 },
+  BARC: { name: 'Barclays plc', price: 2.44, changePercent: 1.22, sector: 'Financials', exchange: 'LSE', marketCap: 44e9 },
+  RR: { name: 'Rolls-Royce Holdings', price: 6.88, changePercent: 1.55, sector: 'Industrials', exchange: 'LSE', marketCap: 63e9 },
+  // Asian stocks (US-listed ADRs and direct)
+  TSM: { name: 'Taiwan Semiconductor', price: 184.22, changePercent: -1.44, sector: 'Technology', exchange: 'NYSE', marketCap: 953e9 },
+  BABA: { name: 'Alibaba Group', price: 135.88, changePercent: 2.33, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 332e9 },
+  JD: { name: 'JD.com Inc', price: 44.22, changePercent: 1.55, sector: 'Consumer Discretionary', exchange: 'NASDAQ', marketCap: 68e9 },
+  PDD: { name: 'PDD Holdings (Temu)', price: 122.44, changePercent: 0.88, sector: 'Consumer Discretionary', exchange: 'NASDAQ', marketCap: 171e9 },
+  BIDU: { name: 'Baidu Inc', price: 88.55, changePercent: 1.22, sector: 'Technology', exchange: 'NASDAQ', marketCap: 31e9 },
+  NIO: { name: 'NIO Inc', price: 4.55, changePercent: -2.22, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 9.3e9 },
+  XPEV: { name: 'XPeng Inc', price: 22.88, changePercent: -1.55, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 20e9 },
+  LI: { name: 'Li Auto Inc', price: 28.33, changePercent: -1.11, sector: 'Consumer Discretionary', exchange: 'NASDAQ', marketCap: 30e9 },
+  TM: { name: 'Toyota Motor Corp', price: 197.44, changePercent: -0.44, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 282e9 },
+  HMC: { name: 'Honda Motor Co', price: 28.88, changePercent: -0.66, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 48e9 },
+  SONY: { name: 'Sony Group Corp', price: 18.44, changePercent: 0.33, sector: 'Technology', exchange: 'NYSE', marketCap: 113e9 },
+  NTDOY: { name: 'Nintendo Co Ltd', price: 13.22, changePercent: 0.22, sector: 'Communication Services', exchange: 'OTC', marketCap: 174e9 },
+  SNE: { name: 'Sony (ADR)', price: 94.77, changePercent: 0.55, sector: 'Technology', exchange: 'NYSE', marketCap: 118e9 },
+  SoftBank: { name: 'SoftBank Group Corp', price: 9.88, changePercent: 1.44, sector: 'Technology', exchange: 'OTC', marketCap: 85e9 },
+  // Indian stocks (US-listed)
+  INFY: { name: 'Infosys Ltd', price: 18.88, changePercent: -0.33, sector: 'Technology', exchange: 'NYSE', marketCap: 79e9 },
+  WIT: { name: 'Wipro Ltd', price: 6.44, changePercent: 0.16, sector: 'Technology', exchange: 'NYSE', marketCap: 33e9 },
+  HDB: { name: 'HDFC Bank Ltd', price: 62.22, changePercent: 0.44, sector: 'Financials', exchange: 'NYSE', marketCap: 169e9 },
+  IBN: { name: 'ICICI Bank Ltd', price: 26.44, changePercent: 0.88, sector: 'Financials', exchange: 'NYSE', marketCap: 94e9 },
+  // Australian stocks
+  BHP: { name: 'BHP Group Ltd', price: 57.44, changePercent: 0.55, sector: 'Materials', exchange: 'NYSE', marketCap: 142e9 },
+  // Canadian stocks
+  SHOP_CA: { name: 'Shopify Inc (CA)', price: 122.96, changePercent: -2.54, sector: 'Technology', exchange: 'TSX', marketCap: 156e9 },
+  CNR: { name: 'Canadian National Railway', price: 128.44, changePercent: -0.22, sector: 'Industrials', exchange: 'NYSE', marketCap: 91e9 },
+  // LatAm
+  MELI: { name: 'MercadoLibre Inc', price: 2188.44, changePercent: -1.33, sector: 'Consumer Discretionary', exchange: 'NASDAQ', marketCap: 110e9 },
+  NU: { name: 'Nu Holdings Ltd', price: 12.88, changePercent: 1.11, sector: 'Financials', exchange: 'NYSE', marketCap: 62e9 },
+  // Crypto-adjacent / high-interest
+  MSTR: { name: 'MicroStrategy Inc', price: 344.55, changePercent: -3.44, sector: 'Technology', exchange: 'NASDAQ', marketCap: 33e9 },
+  MARA: { name: 'Marathon Digital Holdings', price: 14.22, changePercent: -4.55, sector: 'Technology', exchange: 'NASDAQ', marketCap: 3.5e9 },
+  RIOT: { name: 'Riot Platforms Inc', price: 8.44, changePercent: -3.22, sector: 'Technology', exchange: 'NASDAQ', marketCap: 2.5e9 },
+  // Additional popular US
+  PLTR: { name: 'Palantir Technologies', price: 93.44, changePercent: -2.11, sector: 'Technology', exchange: 'NYSE', marketCap: 213e9 },
+  AI: { name: 'C3.ai Inc', price: 26.88, changePercent: -1.66, sector: 'Technology', exchange: 'NYSE', marketCap: 3.5e9 },
+  PATH: { name: 'UiPath Inc', price: 12.44, changePercent: -1.11, sector: 'Technology', exchange: 'NYSE', marketCap: 7.2e9 },
+  SNOW: { name: 'Snowflake Inc', price: 144.33, changePercent: -2.33, sector: 'Technology', exchange: 'NYSE', marketCap: 49e9 },
+  DDOG: { name: 'Datadog Inc', price: 112.55, changePercent: -1.77, sector: 'Technology', exchange: 'NASDAQ', marketCap: 36e9 },
+  CRWD: { name: 'CrowdStrike Holdings', price: 388.22, changePercent: -0.55, sector: 'Technology', exchange: 'NASDAQ', marketCap: 94e9 },
+  ABNB: { name: 'Airbnb Inc', price: 128.44, changePercent: -0.88, sector: 'Consumer Discretionary', exchange: 'NASDAQ', marketCap: 81e9 },
+  LYFT: { name: 'Lyft Inc', price: 14.88, changePercent: 0.54, sector: 'Technology', exchange: 'NASDAQ', marketCap: 6.4e9 },
+  DASH: { name: 'DoorDash Inc', price: 177.44, changePercent: -0.33, sector: 'Technology', exchange: 'NYSE', marketCap: 74e9 },
+  HOOD: { name: 'Robinhood Markets', price: 44.33, changePercent: 1.88, sector: 'Financials', exchange: 'NASDAQ', marketCap: 38e9 },
+  SOFI: { name: 'SoFi Technologies', price: 12.88, changePercent: 1.22, sector: 'Financials', exchange: 'NASDAQ', marketCap: 13e9 },
+  GME: { name: 'GameStop Corp', price: 28.44, changePercent: -1.55, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 12e9 },
+  AMC: { name: 'AMC Entertainment', price: 3.22, changePercent: -2.44, sector: 'Communication Services', exchange: 'NYSE', marketCap: 1.3e9 },
+  RIVN: { name: 'Rivian Automotive', price: 12.44, changePercent: -2.88, sector: 'Consumer Discretionary', exchange: 'NASDAQ', marketCap: 13e9 },
+  LCID: { name: 'Lucid Group Inc', price: 2.77, changePercent: -1.44, sector: 'Consumer Discretionary', exchange: 'NASDAQ', marketCap: 7.3e9 },
+  F: { name: 'Ford Motor Co', price: 9.88, changePercent: -0.50, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 39e9 },
+  GM: { name: 'General Motors Co', price: 49.22, changePercent: -0.81, sector: 'Consumer Discretionary', exchange: 'NYSE', marketCap: 44e9 },
+  // Pharma / Biotech
+  LLY: { name: 'Eli Lilly and Co', price: 788.44, changePercent: -1.22, sector: 'Healthcare', exchange: 'NYSE', marketCap: 748e9 },
+  NVO: { name: 'Novo Nordisk A/S', price: 71.88, changePercent: -1.55, sector: 'Healthcare', exchange: 'NYSE', marketCap: 322e9 },
+  AMGN: { name: 'Amgen Inc', price: 255.44, changePercent: -0.44, sector: 'Healthcare', exchange: 'NASDAQ', marketCap: 137e9 },
+  GILD: { name: 'Gilead Sciences Inc', price: 99.88, changePercent: 0.33, sector: 'Healthcare', exchange: 'NASDAQ', marketCap: 123e9 },
+  BIIB: { name: 'Biogen Inc', price: 133.22, changePercent: -1.77, sector: 'Healthcare', exchange: 'NASDAQ', marketCap: 19e9 },
+  REGN: { name: 'Regeneron Pharmaceuticals', price: 636.44, changePercent: -0.88, sector: 'Healthcare', exchange: 'NASDAQ', marketCap: 68e9 },
+  // More ETFs
+  ARKK: { name: 'ARK Innovation ETF', price: 44.88, changePercent: -2.33, sector: 'ETF', exchange: 'NYSE', marketCap: 7.8e9 },
+  TLT: { name: 'iShares 20+ Yr Treasury', price: 88.44, changePercent: 0.22, sector: 'ETF', exchange: 'NASDAQ', marketCap: 55e9 },
+  XLF: { name: 'Financial Select Sector', price: 48.22, changePercent: -0.66, sector: 'ETF', exchange: 'NYSE', marketCap: 43e9 },
+  XLE: { name: 'Energy Select Sector', price: 93.44, changePercent: 0.88, sector: 'ETF', exchange: 'NYSE', marketCap: 38e9 },
+  SLV: { name: 'iShares Silver Trust', price: 28.88, changePercent: 1.11, sector: 'Commodity ETF', exchange: 'NYSE', marketCap: 13e9 },
 };
 
 function mockSeededPrice(symbol: string, base: number): number {
@@ -114,18 +196,29 @@ function mockSeededPrice(symbol: string, base: number): number {
   return parseFloat((base * (1 + dayVariance + hourVariance + minuteNoise)).toFixed(2));
 }
 
+const EXCHANGE_INFO: Record<string, { country: string; currency: string }> = {
+  NASDAQ: { country: 'US', currency: 'USD' },
+  NYSE: { country: 'US', currency: 'USD' },
+  LSE: { country: 'GB', currency: 'GBP' },
+  EPA: { country: 'FR', currency: 'EUR' },
+  ETR: { country: 'DE', currency: 'EUR' },
+  TSX: { country: 'CA', currency: 'CAD' },
+  OTC: { country: 'US', currency: 'USD' },
+};
+
 function getMockStock(symbol: string): Stock | null {
   const sym = symbol.toUpperCase();
   const entry = MOCK_DB[sym];
   if (!entry) return null;
   const price = mockSeededPrice(sym, entry.price);
   const change = parseFloat((price - entry.price).toFixed(2));
+  const exInfo = EXCHANGE_INFO[entry.exchange] ?? { country: 'US', currency: 'USD' };
   return {
     symbol: sym,
     name: entry.name,
     exchange: entry.exchange,
-    country: entry.exchange === 'LSE' ? 'GB' : 'US',
-    currency: entry.exchange === 'LSE' ? 'GBP' : 'USD',
+    country: exInfo.country,
+    currency: exInfo.currency,
     price,
     previousClose: entry.price,
     change,
@@ -138,7 +231,7 @@ function getMockStock(symbol: string): Stock | null {
     eps: entry.sector === 'ETF' ? undefined : parseFloat((price / 25).toFixed(2)),
     sector: entry.sector,
     logoUrl: '',
-    description: `${entry.name} is a publicly traded company on the ${entry.exchange}.`,
+    description: `${entry.name} is listed on ${entry.exchange}.`,
     isOpen: isMarketOpen(entry.exchange),
   };
 }
@@ -150,9 +243,10 @@ function searchMockStocks(query: string): SearchResult[] {
     .filter(([sym, data]) =>
       sym.includes(q) ||
       data.name.toUpperCase().includes(q) ||
-      data.sector.toUpperCase().includes(q)
+      data.sector.toUpperCase().includes(q) ||
+      data.exchange.toUpperCase().includes(q)
     )
-    .slice(0, 12)
+    .slice(0, 20)
     .map(([sym, data]) => ({
       symbol: sym,
       name: data.name,
@@ -723,23 +817,26 @@ export interface SearchResult {
 }
 
 export async function searchStocks(query: string): Promise<SearchResult[]> {
-  // Yahoo Finance search — same as Apple Stocks app, no API key needed
-  const yahooResults = await yahooSearch(query);
-  if (yahooResults.length > 0) return yahooResults;
-
-  // Fall back to Finnhub if key is configured
+  // When Finnhub key is configured, use Finnhub symbol search for broadest global coverage
   if (!IS_MOCK_STOCKS) {
     try {
-      const res = await finnhub.get('/search', { params: { q: query } });
-      const results = (res.data.result || []).slice(0, 20).map((r: Record<string, string>) => ({
+      const res = await axios.get(
+        `https://finnhub.io/api/v1/search?q=${encodeURIComponent(query)}&token=${FINNHUB_KEY}`,
+        { timeout: 10_000 }
+      );
+      const results: SearchResult[] = (res.data.result || []).slice(0, 20).map((r: Record<string, string>) => ({
         symbol: r.symbol,
         name: r.description,
         type: r.type,
         displaySymbol: r.displaySymbol,
       }));
       if (results.length > 0) return results;
-    } catch { /* fall through */ }
+    } catch { /* fall through to Yahoo */ }
   }
+
+  // Yahoo Finance search — same as Apple Stocks app, no API key needed
+  const yahooResults = await yahooSearch(query);
+  if (yahooResults.length > 0) return yahooResults;
 
   // Fall back to mock database
   return searchMockStocks(query);
