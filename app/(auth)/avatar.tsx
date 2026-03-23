@@ -11,51 +11,69 @@ import { Colors, FontSize, FontWeight, Spacing, Radius } from '../../src/constan
 import type { AvatarConfig } from '../../src/types';
 
 const SKIN_TONES = ['#FDDBB4', '#F1C27D', '#E0AC69', '#C68642', '#8D5524'];
-const HAIR_STYLES = ['afro', 'spiky', 'long', 'curly', 'buzz'];
-const HAIR_STYLE_LABELS = ['Afro', 'Spiky', 'Long', 'Curly', 'Buzz'];
+const HAIR_STYLES = ['spiky', 'long', 'buzz'];
+const HAIR_STYLE_LABELS = ['Spiky', 'Long', 'Buzz'];
 const HAIR_COLORS = ['#1A1A1A', '#8B4513', '#FFD700', '#FF6B6B', '#4FC3F7', '#E8E8E8'];
 const EYE_COLORS = ['#2C3E50', '#16A085', '#8E44AD', '#E67E22', '#2980B9'];
 const OUTFIT_COLORS = ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C'];
+
+// Spiky hair: 5 individual spike shapes behind the head.
+// Head (zIndex:1) renders on top and its circular edge naturally
+// creates the "curling around the top half of the head" effect.
+const SPIKE_DATA: { aboveTop: number; left: number }[] = [
+  { aboveTop: 38, left: 6 },
+  { aboveTop: 28, left: 20 },
+  { aboveTop: 44, left: 34 },
+  { aboveTop: 30, left: 48 },
+  { aboveTop: 36, left: 62 },
+];
 
 function AvatarPreview({ config }: { config: AvatarConfig }) {
   const skin = SKIN_TONES[config.skinTone];
   const hair = HAIR_COLORS[config.hairColor];
   const eye = EYE_COLORS[config.eyeColor];
   const outfit = OUTFIT_COLORS[config.outfitColor];
-  const isLong = config.hairStyle === 2;
 
-  // Hair shapes — head top edge is at y=16 in the wrapper.
-  // All styles must NOT cover the face (only sit on top of / beside the head).
-  const hairTopStyle = () => {
+  // All hair at zIndex:0. Head (zIndex:1) renders on top, its circular arc
+  // naturally cuts around the top half of each hair shape.
+  const hairShape = () => {
     switch (config.hairStyle) {
-      // 0 Afro — round puff sitting ON TOP of head; bottom=(-20+40)=20 → 4px into scalp only
-      case 0: return { borderRadius: 44, top: -20, width: 88, height: 40, left: -4 };
-      // 1 Spiky — flat-topped block above head
-      case 1: return { top: -24, width: 68, height: 28, left: 6, borderTopLeftRadius: 4, borderTopRightRadius: 4, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
-      // 3 Curly — wavy oval on top; bottom=(-14+34)=20 → just on scalp
-      case 3: return { borderRadius: 44, top: -14, width: 88, height: 34, left: -4 };
-      // 4 Buzz — thin flat cap right at scalp top
-      case 4: return { borderRadius: 4, top: 14, width: 72, height: 10, left: 4 };
-      default: return { borderRadius: 44, top: -20, width: 88, height: 40, left: -4 };
+      case 1: // Long — wide dome, straight sides extend past body
+        return { top: 4, left: -4, width: 88, height: 126,
+          borderTopLeftRadius: 44, borderTopRightRadius: 44,
+          borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
+      case 2: // Buzz — thin arc, top-half height only
+        return { top: 12, left: 0, width: 80, height: 42,
+          borderTopLeftRadius: 40, borderTopRightRadius: 40,
+          borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
+      default:
+        return { top: 0, left: 0, width: 0, height: 0 };
     }
   };
 
   return (
     <View style={previewStyles.wrapper}>
-      {/* Hair — Long uses side streaks + top cap; all others use a single top piece */}
-      {isLong ? (
-        <>
-          {/* Top cap so hair is visible on top of head */}
-          <View style={[previewStyles.hairLongTop, { backgroundColor: hair }]} />
-          {/* Left streak — behind the head, beside the face */}
-          <View style={[previewStyles.hairSideL, { backgroundColor: hair }]} />
-          {/* Right streak */}
-          <View style={[previewStyles.hairSideR, { backgroundColor: hair }]} />
-        </>
+      {/* Hair */}
+      {config.hairStyle === 0 ? (
+        // Spiky — five individual spike views behind the head
+        SPIKE_DATA.map(({ aboveTop, left }, i) => (
+          <View
+            key={i}
+            style={{
+              position: 'absolute', zIndex: 0,
+              top: 16 - aboveTop,
+              left,
+              width: 9,
+              height: aboveTop + 46,
+              borderTopLeftRadius: 5, borderTopRightRadius: 5,
+              backgroundColor: hair,
+            }}
+          />
+        ))
       ) : (
-        <View style={[previewStyles.hair, hairTopStyle(), { backgroundColor: hair }]} />
+        <View style={[{ position: 'absolute', zIndex: 0 }, hairShape(), { backgroundColor: hair }]} />
       )}
-      {/* Head */}
+      {/* Head — zIndex:1 curves naturally over all hair styles */}
       <View style={[previewStyles.head, { backgroundColor: skin }]}>
         {/* Eyes — white sclera with coloured iris */}
         <View style={previewStyles.eyeRow}>
@@ -82,27 +100,7 @@ function AvatarPreview({ config }: { config: AvatarConfig }) {
 }
 
 const previewStyles = StyleSheet.create({
-  wrapper: { alignItems: 'center', width: 80, height: 130 },
-  hair: { position: 'absolute', zIndex: 2 },
-  // Long hair: top cap on scalp + two narrow side streaks behind head
-  hairLongTop: {
-    position: 'absolute', zIndex: 2,
-    top: 12, left: 4, width: 72, height: 16,
-    borderTopLeftRadius: 36, borderTopRightRadius: 36,
-    borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
-  },
-  hairSideL: {
-    position: 'absolute', zIndex: 0,
-    top: 16, left: 2, width: 11, height: 96,
-    borderTopLeftRadius: 6, borderBottomLeftRadius: 6,
-    borderTopRightRadius: 0, borderBottomRightRadius: 0,
-  },
-  hairSideR: {
-    position: 'absolute', zIndex: 0,
-    top: 16, left: 67, width: 11, height: 96,
-    borderTopLeftRadius: 0, borderBottomLeftRadius: 0,
-    borderTopRightRadius: 6, borderBottomRightRadius: 6,
-  },
+  wrapper: { alignItems: 'center', width: 80, height: 130, overflow: 'visible' as any },
   head: {
     width: 72, height: 72, borderRadius: 36,
     alignItems: 'center', justifyContent: 'center',

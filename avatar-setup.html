@@ -13,7 +13,7 @@ h1{font-size:24px;font-weight:800;text-align:center;margin-top:52px;margin-botto
 .preview-card{background:#111827;border:1px solid #1A2235;border-radius:18px;padding:28px 40px;display:flex;flex-direction:column;align-items:center;margin-bottom:28px;width:100%;max-width:420px}
 .avatar-wrap{width:96px;height:160px;position:relative;display:flex;flex-direction:column;align-items:center;overflow:visible}
 .av-hair{position:absolute;z-index:2;pointer-events:none}
-.av-head{width:86px;height:86px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-top:20px;z-index:1;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.av-head{width:86px;height:86px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-top:20px;position:relative;z-index:1;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
 .av-eyes{display:flex;gap:16px;margin-bottom:8px}
 .av-eye{width:17px;height:17px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center}
 .av-iris{width:11px;height:11px;border-radius:50%}
@@ -85,52 +85,49 @@ const SKIN  = ['#FDDBB4','#F1C27D','#E0AC69','#C68642','#8D5524'];
 const HAIR_C= ['#1A1A1A','#8B4513','#FFD700','#FF6B6B','#4FC3F7','#E8E8E8'];
 const EYE_C = ['#2C3E50','#16A085','#8E44AD','#E67E22','#2980B9'];
 const OUT_C = ['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C'];
-const HAIR_L= ['Afro','Spiky','Long','Curly','Buzz'];
+const HAIR_L= ['Spiky','Long','Buzz'];
 
 let cfg = {skin:0, hair:0, hairColor:0, eye:0, outfit:0};
 
 // Head occupies x:5–91 in the 96px-wide wrap, top edge at y:20
 // Hair must NOT cover the face — only sit on top of or beside the head
 
+// All hair uses z-index:0. The av-head has position:relative + z-index:1 so
+// its circular arc naturally "curves around the top half" of every hair style.
 function updateAvatar(){
-  const h  = document.getElementById('avHair');
-  const h2 = document.getElementById('avHair2');
-  const h3 = document.getElementById('avHair3');
-  const c  = HAIR_C[cfg.hairColor];
-  const B  = 'position:absolute;pointer-events:none;';
-
-  // Hide side divs by default
-  h2.style.cssText = B+'display:none';
-  h3.style.cssText = B+'display:none';
+  const h = document.getElementById('avHair');
+  const c = HAIR_C[cfg.hairColor];
+  const B = 'position:absolute;pointer-events:none;z-index:0;background:'+c+';';
 
   switch(cfg.hair){
 
-    case 0: // Afro — round puff ON TOP of head; bottom=(-38+62)=24 → 4px into scalp
-      h.style.cssText = B+'z-index:2;background:'+c+';top:-38px;left:-9px;width:114px;height:62px;border-radius:50%';
+    case 0: // Spiky — 5 spike shapes via clip-path; head arc creates curved base
+      // Div extends from above head (top=-52) down to head centre (y=63); height=115
+      // Spike bases sit at ~80% of div height (inside the head, naturally covered)
+      h.style.cssText = B+
+        'top:-52px;left:0px;width:96px;height:115px;border-radius:0;'+
+        'clip-path:polygon('+
+          '0% 100%,100% 100%,100% 68%,'+
+          '92% 82%,87% 14%,82% 82%,'+   // rightmost spike
+          '72% 82%,67% 24%,62% 82%,'+   // right-centre spike
+          '52% 80%,47% 4%,42% 80%,'+    // centre spike (tallest)
+          '32% 82%,27% 22%,22% 82%,'+   // left-centre spike
+          '16% 82%,11% 46%,6% 82%,'+    // leftmost spike
+          '0% 68%)';
       break;
 
-    case 1: // Spiky — anime spikes via clip-path, sits above the head
-      h.style.cssText = B+'z-index:2;background:'+c+';top:-52px;left:0px;width:96px;height:64px;border-radius:0;'+
-        'clip-path:polygon(0% 100%,0% 62%,12% 82%,22% 8%,33% 68%,44% 0%,55% 68%,67% 10%,78% 80%,88% 62%,100% 100%)';
+    case 1: // Long — wide dome top, straight sides extend past the body
+      h.style.cssText = B+
+        'top:5px;left:-6px;width:108px;height:155px;border-radius:54px 54px 0 0';
       break;
 
-    case 2: // Long — scalp cap + two side streaks; face stays fully clear
-      h.style.cssText  = B+'z-index:2;background:'+c+';top:12px;left:5px;width:86px;height:18px;border-radius:43px 43px 0 0';
-      h2.style.cssText = B+'z-index:0;background:'+c+';top:18px;left:1px;width:13px;height:116px;border-radius:7px 0 7px 7px;display:block';
-      h3.style.cssText = B+'z-index:0;background:'+c+';top:18px;left:82px;width:13px;height:116px;border-radius:0 7px 7px 7px;display:block';
-      break;
-
-    case 3: // Curly — wavy oval on top only; bottom=(-24+52)=28 → 8px into scalp
-      h.style.cssText = B+'z-index:2;background:'+c+';top:-24px;left:-8px;width:112px;height:52px;'+
-        'border-radius:50% 50% 44% 44% / 52% 52% 58% 58%';
-      break;
-
-    case 4: // Buzz — thin flat cap flush with scalp top
-      h.style.cssText = B+'z-index:2;background:'+c+';top:14px;left:5px;width:86px;height:12px;border-radius:6px 6px 0 0';
+    case 2: // Buzz — thin arc, only top-half height; visibly thinner than Long
+      h.style.cssText = B+
+        'top:14px;left:0px;width:96px;height:52px;border-radius:48px 48px 0 0';
       break;
 
     default:
-      h.style.cssText = B+'display:none';
+      h.style.cssText = 'position:absolute;display:none';
   }
 
   document.getElementById('avHead').style.background = SKIN[cfg.skin];

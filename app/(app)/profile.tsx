@@ -16,7 +16,7 @@ import type { AvatarConfig } from '../../src/types';
 
 // ─── Avatar rendering constants ──────────────────────────────────────────────
 const SKIN_TONES = ['#FDDBB4', '#F1C27D', '#E0AC69', '#C68642', '#8D5524'];
-const HAIR_STYLE_LABELS = ['Afro', 'Spiky', 'Long', 'Curly', 'Buzz'];
+const HAIR_STYLE_LABELS = ['Spiky', 'Long', 'Buzz'];
 const HAIR_COLORS = ['#1A1A1A', '#8B4513', '#FFD700', '#FF6B6B', '#4FC3F7', '#E8E8E8'];
 const EYE_COLORS = ['#2C3E50', '#16A085', '#8E44AD', '#E67E22', '#2980B9'];
 const OUTFIT_COLORS = ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C'];
@@ -30,37 +30,51 @@ function AvatarPreview({ config, size = 'md' }: { config: AvatarConfig; size?: '
   const scale = size === 'lg' ? 1.4 : size === 'sm' ? 0.7 : 1;
   const s = (n: number) => n * scale;
 
-  const isLong = config.hairStyle === 2;
+  // Spiky spike data — same as in avatar.tsx but scaled via s()
+  const SPIKE_D = [
+    { aboveTop: 38, left: 6 },
+    { aboveTop: 28, left: 20 },
+    { aboveTop: 44, left: 34 },
+    { aboveTop: 30, left: 48 },
+    { aboveTop: 36, left: 62 },
+  ];
 
-  // Hair shapes — head top edge is at y=s(16). Nothing should cover the face.
-  const hairTopStyle = () => {
+  // All hair at zIndex:0; head (zIndex:1) arcs naturally over the top half.
+  const hairShape = () => {
     switch (config.hairStyle) {
-      // 0 Afro — round puff ON TOP; bottom=(-20+40)=s(20) → 4px into scalp
-      case 0: return { borderRadius: s(44), top: -s(20), width: s(88), height: s(40), left: -s(4) };
-      // 1 Spiky — flat-topped block above head
-      case 1: return { top: -s(24), width: s(68), height: s(28), left: s(6), borderTopLeftRadius: s(4), borderTopRightRadius: s(4), borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
-      // 3 Curly — wavy oval on top; bottom=(-14+34)=s(20) → just on scalp
-      case 3: return { borderRadius: s(44), top: -s(14), width: s(88), height: s(34), left: -s(4) };
-      // 4 Buzz — thin flat cap right at scalp top
-      case 4: return { borderRadius: s(4), top: s(14), width: s(72), height: s(10), left: s(4) };
-      default: return { borderRadius: s(44), top: -s(20), width: s(88), height: s(40), left: -s(4) };
+      case 1: // Long
+        return { top: s(4), left: -s(4), width: s(88), height: s(126),
+          borderTopLeftRadius: s(44), borderTopRightRadius: s(44),
+          borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
+      case 2: // Buzz — thin arc, top-half only
+        return { top: s(12), left: 0, width: s(80), height: s(42),
+          borderTopLeftRadius: s(40), borderTopRightRadius: s(40),
+          borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
+      default:
+        return { top: 0, left: 0, width: 0, height: 0 };
     }
   };
 
   return (
-    <View style={{ alignItems: 'center', width: s(80), height: s(130) }}>
-      {/* Hair — Long = scalp cap + two side streaks; others = single top piece */}
-      {isLong ? (
-        <>
-          {/* Scalp cap */}
-          <View style={{ position: 'absolute', zIndex: 2, top: s(12), left: s(4), width: s(72), height: s(16), borderTopLeftRadius: s(36), borderTopRightRadius: s(36), borderBottomLeftRadius: 0, borderBottomRightRadius: 0, backgroundColor: hair }} />
-          {/* Left streak — behind head */}
-          <View style={{ position: 'absolute', zIndex: 0, top: s(16), left: s(2), width: s(11), height: s(96), borderTopLeftRadius: s(6), borderBottomLeftRadius: s(6), borderTopRightRadius: 0, borderBottomRightRadius: 0, backgroundColor: hair }} />
-          {/* Right streak — behind head */}
-          <View style={{ position: 'absolute', zIndex: 0, top: s(16), left: s(67), width: s(11), height: s(96), borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderTopRightRadius: s(6), borderBottomRightRadius: s(6), backgroundColor: hair }} />
-        </>
+    <View style={{ alignItems: 'center', width: s(80), height: s(130), overflow: 'visible' as any }}>
+      {/* Hair */}
+      {config.hairStyle === 0 ? (
+        SPIKE_D.map(({ aboveTop, left }, i) => (
+          <View
+            key={i}
+            style={{
+              position: 'absolute', zIndex: 0,
+              top: s(16 - aboveTop),
+              left: s(left),
+              width: s(9),
+              height: s(aboveTop + 46),
+              borderTopLeftRadius: s(5), borderTopRightRadius: s(5),
+              backgroundColor: hair,
+            }}
+          />
+        ))
       ) : (
-        <View style={[{ position: 'absolute', zIndex: 2 }, hairTopStyle(), { backgroundColor: hair }]} />
+        <View style={[{ position: 'absolute', zIndex: 0 }, hairShape(), { backgroundColor: hair }]} />
       )}
       <View style={{
         width: s(72), height: s(72), borderRadius: s(36),
