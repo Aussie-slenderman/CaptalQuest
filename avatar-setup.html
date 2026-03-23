@@ -130,7 +130,9 @@ let currentUser=null;
 auth.onAuthStateChanged(u=>{currentUser=u;});
 
 // ── Route detection ────────────────────────────────────────────────────────
-const fromProfile=new URLSearchParams(window.location.search).get('from')==='profile';
+const params=new URLSearchParams(window.location.search);
+const fromProfile=params.get('from')==='profile';
+const isEmbed=params.get('embed')==='1'; // opened inside an iframe from the app
 
 // ── Animal lists ───────────────────────────────────────────────────────────
 const ANIMALS_1=[
@@ -207,7 +209,7 @@ try{
   }
 }catch(e){}
 
-if(fromProfile){
+if(isEmbed||fromProfile){
   ['doneBtn1','doneBtn2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Save Changes';});
   const s=document.getElementById('sub1');if(s)s.textContent='Update your animal and background';
   auth.onAuthStateChanged(async u=>{
@@ -279,11 +281,21 @@ function goPage(n){
 async function finish(){
   ['doneBtn1','doneBtn2'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=true;el.textContent='Saving…';}});
   const avatarConfig={animal:selected,bgColor};
-  if(fromProfile&&currentUser){
+
+  if(isEmbed){
+    // Opened inside an iframe — save to Firebase then tell the parent to close us
+    if(currentUser){
+      try{await db.collection('users').doc(currentUser.uid).update({avatarConfig});}
+      catch(e){localStorage.setItem('pendingAvatarConfig',JSON.stringify(avatarConfig));}
+    }
+    window.parent.postMessage({type:'avatarSaved',config:avatarConfig},'*');
+  }else if(fromProfile&&currentUser){
+    // Direct navigation from profile (fallback)
     try{await db.collection('users').doc(currentUser.uid).update({avatarConfig});}
     catch(e){localStorage.setItem('pendingAvatarConfig',JSON.stringify(avatarConfig));}
     window.location.href='/';
   }else{
+    // Onboarding flow
     localStorage.setItem('pendingAvatarConfig',JSON.stringify(avatarConfig));
     window.location.href='/setup';
   }
