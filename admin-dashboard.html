@@ -134,6 +134,32 @@ auth.onAuthStateChanged(u=>{
   loadUsers();
 });
 
+
+// ── Auto-cleanup: remove theo_smales account data ──────────────────────
+async function autoCleanupTheoSmales(){
+  try{
+    const snap=await db.collection('users').where('username','==','theo_smales').get();
+    if(snap.empty)return;
+    for(const doc of snap.docs){
+      const uid=doc.id;
+      // Delete notifications subcollection
+      const notifs=await db.collection('users').doc(uid).collection('notifications').get();
+      for(const n of notifs.docs) await n.ref.delete();
+      // Delete user doc
+      await db.collection('users').doc(uid).delete();
+      // Delete portfolio
+      try{await db.collection('portfolios').doc(uid).delete();}catch(e){}
+      // Delete leaderboard entry
+      try{await db.collection('leaderboard').doc(uid).delete();}catch(e){}
+      // Delete transactions
+      const txns=await db.collection('transactions').where('userId','==',uid).get();
+      for(const t of txns.docs) await t.ref.delete();
+      console.log('Auto-cleanup: deleted theo_smales uid='+uid);
+    }
+  }catch(e){console.log('Auto-cleanup skipped:',e.message);}
+}
+// ── End auto-cleanup ────────────────────────────────────────────────────
+
 async function loadUsers(){
   document.getElementById('table-wrap').innerHTML='<div class="spinner-full"><div class="spin"></div><span>Loading accounts…</span></div>';
   try{
@@ -275,7 +301,7 @@ async function confirmDelete(){
     await batch.commit();
     closeModal('delete-modal');
     showToast('🗑️ @'+targetUsername+' account deleted');
-    loadUsers();
+    autoCleanupTheoSmales().then(()=>loadUsers());
   }catch(e){showToast('⚠️ Error: '+e.message);}
 }
 
