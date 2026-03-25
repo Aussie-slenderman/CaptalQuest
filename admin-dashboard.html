@@ -269,7 +269,8 @@ function openDelete(uid,username){
 async function confirmDelete(){
   try{
     const batch=db.batch();
-    batch.update(db.collection('users').doc(targetUid),{accountDeleted:true,deletedAt:Date.now()});
+    // Fully delete the user doc so the username is freed for re-use
+    batch.delete(db.collection('users').doc(targetUid));
     batch.delete(db.collection('portfolios').doc(targetUid));
     await batch.commit();
     closeModal('delete-modal');
