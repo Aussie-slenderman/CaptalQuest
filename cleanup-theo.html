@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Cleanup</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head><body style="background:#0A0E1A;color:#F1F5F9;font-family:monospace;padding:24px">
+<pre id="log">Running...</pre>
+<script>
+firebase.initializeApp({apiKey:'AIzaSyCP1AcnDTU2umjR3cGycRxQ5mwOFq4Xjgg',authDomain:'capitalquest-4d20b.firebaseapp.com',projectId:'capitalquest-4d20b',storageBucket:'capitalquest-4d20b.firebasestorage.app',messagingSenderId:'407589569541',appId:'1:407589569541:web:3b8a543f03ad9f110ec86c'});
+const db = firebase.firestore();
+const log = document.getElementById('log');
+function out(msg){ log.textContent += '\n' + msg; }
+
+firebase.auth().onAuthStateChanged(async function(user){
+  if(!user){ out('ERROR: Not signed in. Open admin-dashboard.html first, sign in, then come back here.'); return; }
+  out('Signed in as: ' + user.email);
+  out('Searching for username: theo_smales ...');
+  
+  try {
+    const snap = await db.collection('users').where('username','==','theo_smales').get();
+    if(snap.empty){ out('No user found with username theo_smales in Firestore.'); }
+    else {
+      for(const doc of snap.docs){
+        const uid = doc.id;
+        const data = doc.data();
+        out('Found: uid=' + uid + ' username=' + data.username);
+        
+        // Delete notifications subcollection
+        const notifs = await db.collection('users').doc(uid).collection('notifications').get();
+        for(const n of notifs.docs){ await n.ref.delete(); }
+        out('Deleted ' + notifs.size + ' notifications');
+        
+        // Delete user doc
+        await db.collection('users').doc(uid).delete();
+        out('Deleted users/' + uid);
+        
+        // Delete portfolio
+        try{ await db.collection('portfolios').doc(uid).delete(); out('Deleted portfolios/' + uid); }catch(e){ out('No portfolio found'); }
+        
+        // Delete leaderboard entry
+        try{ await db.collection('leaderboard').doc(uid).delete(); out('Deleted leaderboard/' + uid); }catch(e){}
+        
+        // Delete transactions
+        const txns = await db.collection('transactions').where('userId','==',uid).get();
+        for(const t of txns.docs){ await t.ref.delete(); }
+        out('Deleted ' + txns.size + ' transactions');
+        
+        out('✅ All Firestore data for theo_smales deleted.');
+        out('NOTE: The Firebase Auth login account (theo_smales@capitalquest.app) still exists in Firebase Auth — it cannot be deleted from a browser. If someone tries to re-register that username they will get "username taken". This requires the Firebase Console to fully remove.');
+      }
+    }
+  } catch(e) {
+    out('ERROR: ' + e.message);
+  }
+});
+</script>
+</body></html>
