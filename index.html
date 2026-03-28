@@ -786,18 +786,14 @@ input::-webkit-search-cancel-button,input::-webkit-search-decoration,input::-web
           return; // overlay stays visible
         }
         var data=snap.data();
-        if(data.accountDeleted){
-          // Deleted account — sign out and show welcome screen
+        if(data.accountDeleted||!data.onboardingComplete){
+          // Deleted or incomplete account — sign out, show welcome screen
+          // (incomplete users can sign in from the login page to continue setup)
           firebase.auth().signOut();
           return; // overlay stays visible
         }
-        if(data.onboardingComplete){
-          // Fully set up — go straight to dashboard
-          window.location.replace('/dashboard');
-        } else {
-          // New user mid-onboarding — send them to continue setup
-          window.location.replace('/avatar-setup.html');
-        }
+        // Fully set up — go straight to dashboard
+        window.location.replace('/dashboard');
       }).catch(function(){
         // On error, sign out to be safe — show welcome screen
         firebase.auth().signOut();
