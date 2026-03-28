@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+<title>News — CapitalQuest</title>
+<meta name="theme-color" content="#0A0E1A"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0A0E1A;color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+#app{max-width:680px;margin:0 auto;padding:0 0 60px}
+.nav{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #1A2235;position:sticky;top:0;background:#0A0E1A;z-index:10}
+.back-btn{background:none;border:none;color:#00B3E6;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0}
+.back-btn svg{width:18px;height:18px;fill:none;stroke:#00B3E6;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.nav-title{font-size:15px;font-weight:700;color:#94A3B8}
+.hero-img{width:100%;max-height:260px;object-fit:cover;display:block;background:#111827}
+.content{padding:24px 20px}
+.meta{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.source{background:#1A2235;border:1px solid #2D3748;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#00B3E6;text-transform:uppercase;letter-spacing:.05em}
+.time{font-size:12px;color:#64748B}
+h1{font-size:22px;font-weight:900;line-height:1.35;color:#F1F5F9;margin-bottom:16px}
+.summary{font-size:16px;line-height:1.65;color:#94A3B8;margin-bottom:28px}
+.read-btn{display:block;width:100%;padding:17px;background:linear-gradient(90deg,#00B3E6,#0096C7);border:none;border-radius:14px;color:#fff;font-size:17px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;transition:opacity .15s}
+.read-btn:hover{opacity:.88}
+.no-url{text-align:center;color:#64748B;font-size:14px;margin-top:12px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.tag{background:#111827;border:1px solid #2D3748;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#94A3B8}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <button class="back-btn" onclick="history.length>1?history.back():window.location.href='/'">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <span class="nav-title">Market News</span>
+  </div>
+  <div id="hero-wrap"></div>
+  <div class="content">
+    <div class="meta">
+      <span class="source" id="na-source"></span>
+      <span class="time" id="na-time"></span>
+    </div>
+    <div class="tags" id="na-tags"></div>
+    <h1 id="na-title"></h1>
+    <p class="summary" id="na-summary"></p>
+    <a id="na-btn" class="read-btn" target="_blank" rel="noopener noreferrer">Read Full Article ↗</a>
+    <p class="no-url" id="na-nourl" style="display:none">Full article not available.</p>
+  </div>
+</div>
+<script>
+(function(){
+  var p=new URLSearchParams(window.location.search);
+  var url=p.get('url')||'';
+  var title=p.get('title')||'Market News';
+  var source=p.get('source')||'';
+  var summary=p.get('summary')||'';
+  var img=p.get('img')||'';
+  var time=parseInt(p.get('time')||'0',10);
+  var symbols=(p.get('symbols')||'').split(',').filter(Boolean);
+
+  document.title=title+' — CapitalQuest';
+  document.getElementById('na-title').textContent=title;
+  document.getElementById('na-source').textContent=source||'News';
+  document.getElementById('na-summary').textContent=summary||'Read the full article for more details.';
+
+  if(time){
+    var d=new Date(time);
+    document.getElementById('na-time').textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
+
+  if(img){
+    var wrap=document.getElementById('hero-wrap');
+    var i=document.createElement('img');
+    i.src=img;i.className='hero-img';i.alt='Article image';
+    i.onerror=function(){wrap.remove();};
+    wrap.appendChild(i);
+  }
+
+  if(symbols.length){
+    var tagsEl=document.getElementById('na-tags');
+    symbols.forEach(function(s){
+      var t=document.createElement('span');
+      t.className='tag';t.textContent=s;
+      tagsEl.appendChild(t);
+    });
+  }
+
+  var btn=document.getElementById('na-btn');
+  if(url){
+    btn.href=url;
+  } else {
+    btn.style.display='none';
+    document.getElementById('na-nourl').style.display='block';
+  }
+})();
+</script>
+</body>
+</html>
