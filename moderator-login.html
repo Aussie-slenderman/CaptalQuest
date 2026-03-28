@@ -77,9 +77,7 @@ const auth = firebase.auth();
 
 // ── Credentials ──────────────────────────────────────────────────────────────
 const ALLOWED = { 'theosmales1@gmail.com': 'Bondi2025' };
-// Internal Firebase Auth account used for the admin session
-const MOD_FB_EMAIL = 'moderator@capitalquest.app';
-const MOD_FB_PW    = 'Bondi2025!Mod';
+const MOD_SESSION_KEY = 'cqModSession';
 
 // ── EmailJS ───────────────────────────────────────────────────────────────────
 const EJ_PUBLIC_KEY  = 'lneCy8iqRXbKjHt2A';
@@ -129,13 +127,17 @@ async function doStep2(){
 
   btn.innerHTML = '<span class="spinner"></span>Signing in…'; btn.disabled = true;
   try{
-    await auth.signInWithEmailAndPassword(MOD_FB_EMAIL, MOD_FB_PW);
+    // Anonymous sign-in for Firebase session — always works, no account needed
+    await auth.signInAnonymously();
+    // Mark this tab as an authenticated moderator session
+    sessionStorage.setItem(MOD_SESSION_KEY, 'granted');
+    window.location.href = '/admin-dashboard.html';
   }catch(e){
-    if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'){
-      try{ await auth.createUserWithEmailAndPassword(MOD_FB_EMAIL, MOD_FB_PW); }catch(e2){}
-    }
+    err.textContent = 'Sign-in failed: ' + (e.message || e.code);
+    err.style.display = 'block';
+    btn.innerHTML = 'Verify & Sign In';
+    btn.disabled = false;
   }
-  window.location.href = '/admin-dashboard.html';
 }
 
 // ── Resend ────────────────────────────────────────────────────────────────────
