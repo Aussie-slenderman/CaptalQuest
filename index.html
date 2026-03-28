@@ -780,13 +780,18 @@ input::-webkit-search-cancel-button,input::-webkit-search-decoration,input::-web
     if(user){
       // Check account status in Firestore
       _db.collection('users').doc(user.uid).get().then(function(snap){
-        var data=snap.exists?snap.data():{};
+        if(!snap.exists){
+          // No Firestore doc — orphaned auth account (e.g. deleted by admin)
+          firebase.auth().signOut();
+          return; // overlay stays visible
+        }
+        var data=snap.data();
         if(data.accountDeleted){
           // Deleted account — sign out and show welcome screen
           firebase.auth().signOut();
           return; // overlay stays visible
         }
-        if(snap.exists && data.onboardingComplete){
+        if(data.onboardingComplete){
           // Fully set up — go straight to dashboard
           window.location.replace('/dashboard');
         } else {
