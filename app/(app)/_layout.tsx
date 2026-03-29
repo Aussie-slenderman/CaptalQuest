@@ -133,14 +133,7 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen name="leaderboard" options={{ href: null }} />
-      <Tabs.Screen
-        name="advisor"
-        options={{
-          title: 'AI',
-          tabBarIcon: ({ focused }) => <TabIcon icon="🤖" focused={focused} bgColor="rgba(100, 240, 210, 0.35)" />,
-          tabBarLabelStyle: { ...styles.tabLabel, color: Colors.brand.accent },
-        }}
-      />
+      <Tabs.Screen name="advisor" options={{ href: null }} />
 
       {/* ── Centre: Home ── */}
       <Tabs.Screen

@@ -240,79 +240,6 @@ export default function ProfileScreen() {
         />
       </View>
 
-      {/* Achievements */}
-      <SectionHeader title="Achievements" icon="🏆" />
-      <View style={styles.achievementsList}>
-        {ACHIEVEMENTS.map(ach => {
-          const unlocked = (user.achievements || []).some(a => a.id === ach.id && a.unlockedAt);
-          return (
-            <View
-              key={ach.id}
-              style={[styles.achievementRow, { backgroundColor: C.bg.secondary, borderColor: C.border.default }, !unlocked && styles.achievementRowLocked]}
-            >
-              <View style={[styles.achIconWrapper, { backgroundColor: unlocked ? `${Colors.brand.gold}22` : `${C.bg.tertiary}88` }]}>
-                <Text style={[styles.achievementIcon, !unlocked && { opacity: 0.4 }]}>{ach.icon}</Text>
-              </View>
-              <View style={styles.achBody}>
-                <View style={styles.achTitleRow}>
-                  <Text style={[styles.achievementTitle, { color: C.text.primary }, !unlocked && styles.lockedText]}>
-                    {ach.title}
-                  </Text>
-                  {unlocked
-                    ? <Text style={styles.xpReward}>+{ach.xpReward} XP ✓</Text>
-                    : <Text style={styles.xpRewardLocked}>+{ach.xpReward} XP</Text>
-                  }
-                </View>
-                {unlocked
-                  ? <Text style={[styles.achDescription, { color: C.text.secondary }]}>{ach.description}</Text>
-                  : <Text style={[styles.achRequirement, { color: C.text.tertiary }]}>{ach.requirement ?? ach.description}</Text>
-                }
-              </View>
-              {!unlocked && <Text style={styles.lockIcon}>🔒</Text>}
-            </View>
-          );
-        })}
-      </View>
-
-      {/* XP Levels */}
-      <SectionHeader title="XP Levels" icon="⭐" />
-      <View style={styles.levelsList}>
-        {LEVELS.map(lvl => {
-          const isCurrentLevel = user.level === lvl.level;
-          const isUnlocked = (user.xp || 0) >= lvl.xpRequired;
-          return (
-            <View
-              key={lvl.level}
-              style={[
-                styles.levelRow,
-                { backgroundColor: C.bg.secondary, borderColor: C.border.default },
-                isCurrentLevel && { borderColor: `${lvl.color}88`, backgroundColor: `${lvl.color}0D` },
-              ]}
-            >
-              <View style={[styles.levelIconBadge, { backgroundColor: `${lvl.color}22` }]}>
-                <Text style={styles.levelIconText}>{lvl.icon}</Text>
-              </View>
-              <View style={styles.levelBody}>
-                <Text style={[styles.levelTitle, { color: C.text.primary }, !isUnlocked && styles.lockedText]}>
-                  {lvl.title}
-                </Text>
-                <Text style={[styles.levelSubtitle, { color: C.text.tertiary }]}>
-                  {lvl.xpRequired === 0 ? 'Starting level' : `${lvl.xpRequired} XP`}
-                </Text>
-              </View>
-              <View style={styles.levelRight}>
-                <View style={[styles.levelBadgePill, { backgroundColor: `${lvl.color}22` }]}>
-                  <Text style={[styles.levelBadgePillText, { color: lvl.color }]}>Lv.{lvl.level}</Text>
-                </View>
-              </View>
-              {isCurrentLevel && (
-                <View style={[styles.currentLevelBar, { backgroundColor: lvl.color }]} />
-              )}
-            </View>
-          );
-        })}
-      </View>
-
       {/* Settings */}
       <SectionHeader title="Settings" icon="⚙️" />
       <View style={[styles.settingsContainer, { backgroundColor: C.bg.secondary, borderColor: C.border.default }]}>
@@ -431,6 +358,79 @@ export default function ProfileScreen() {
         >
           <Text style={[styles.resetText, { color: C.text.tertiary }]}>↺  Reset to Defaults</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Achievements */}
+      <SectionHeader title="Achievements" icon="🏆" />
+      <View style={styles.achievementsList}>
+        {ACHIEVEMENTS.map(ach => {
+          const unlocked = (user.achievements || []).some(a => a.id === ach.id && a.unlockedAt);
+          return (
+            <View
+              key={ach.id}
+              style={[styles.achievementRow, { backgroundColor: C.bg.secondary, borderColor: C.border.default }, !unlocked && styles.achievementRowLocked]}
+            >
+              <View style={[styles.achIconWrapper, { backgroundColor: unlocked ? `${Colors.brand.gold}22` : `${C.bg.tertiary}88` }]}>
+                <Text style={[styles.achievementIcon, !unlocked && { opacity: 0.4 }]}>{ach.icon}</Text>
+              </View>
+              <View style={styles.achBody}>
+                <View style={styles.achTitleRow}>
+                  <Text style={[styles.achievementTitle, { color: C.text.primary }, !unlocked && styles.lockedText]}>
+                    {ach.title}
+                  </Text>
+                  {unlocked
+                    ? <Text style={styles.xpReward}>+{ach.xpReward} XP ✓</Text>
+                    : <Text style={styles.xpRewardLocked}>+{ach.xpReward} XP</Text>
+                  }
+                </View>
+                {unlocked
+                  ? <Text style={[styles.achDescription, { color: C.text.secondary }]}>{ach.description}</Text>
+                  : <Text style={[styles.achRequirement, { color: C.text.tertiary }]}>{ach.requirement ?? ach.description}</Text>
+                }
+              </View>
+              {!unlocked && <Text style={styles.lockIcon}>🔒</Text>}
+            </View>
+          );
+        })}
+      </View>
+
+      {/* XP Levels */}
+      <SectionHeader title="XP Levels" icon="⭐" />
+      <View style={styles.levelsList}>
+        {LEVELS.map(lvl => {
+          const isCurrentLevel = user.level === lvl.level;
+          const isUnlocked = (user.xp || 0) >= lvl.xpRequired;
+          return (
+            <View
+              key={lvl.level}
+              style={[
+                styles.levelRow,
+                { backgroundColor: C.bg.secondary, borderColor: C.border.default },
+                isCurrentLevel && { borderColor: `${lvl.color}88`, backgroundColor: `${lvl.color}0D` },
+              ]}
+            >
+              <View style={[styles.levelIconBadge, { backgroundColor: `${lvl.color}22` }]}>
+                <Text style={styles.levelIconText}>{lvl.icon}</Text>
+              </View>
+              <View style={styles.levelBody}>
+                <Text style={[styles.levelTitle, { color: C.text.primary }, !isUnlocked && styles.lockedText]}>
+                  {lvl.title}
+                </Text>
+                <Text style={[styles.levelSubtitle, { color: C.text.tertiary }]}>
+                  {lvl.xpRequired === 0 ? 'Starting level' : `${lvl.xpRequired} XP`}
+                </Text>
+              </View>
+              <View style={styles.levelRight}>
+                <View style={[styles.levelBadgePill, { backgroundColor: `${lvl.color}22` }]}>
+                  <Text style={[styles.levelBadgePillText, { color: lvl.color }]}>Lv.{lvl.level}</Text>
+                </View>
+              </View>
+              {isCurrentLevel && (
+                <View style={[styles.currentLevelBar, { backgroundColor: lvl.color }]} />
+              )}
+            </View>
+          );
+        })}
       </View>
 
       {/* Sign out */}
