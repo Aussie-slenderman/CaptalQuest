@@ -42,8 +42,7 @@ export async function signOut() {
 
 export async function deleteAccount(userId: string) {
   if (IS_MOCK) return Mock.mockDeleteAccount(userId);
-  // Firebase: would delete auth user + Firestore docs — not implemented here
-  return Mock.mockDeleteAccount(userId);
+  return FB.deleteFirebaseAccount(userId);
 }
 
 export function onAuthChange(callback: (user: unknown) => void) {

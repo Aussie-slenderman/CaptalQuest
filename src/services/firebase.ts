@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
+  deleteUser,
   User as FirebaseUser,
 } from 'firebase/auth';
 import {
@@ -79,7 +80,23 @@ export async function registerUser(
   country: string
 ) {
   const email = username + '@capitalquest.app';
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  let cred;
+  try {
+    cred = await createUserWithEmailAndPassword(auth, email, password);
+  } catch (e: any) {
+    if (e?.code === 'auth/email-already-in-use') {
+      // Username was previously deleted — check if Firestore user doc is gone
+      const usersSnap = await getDocs(query(collection(db, 'users'), where('username', '==', username)));
+      if (usersSnap.empty) {
+        // Firestore data is deleted, so this is a freed username
+        // Sign in with the old auth account is not possible (we don't know the old password)
+        // Re-throw with a clearer message
+        throw new Error('This username was recently deleted. Please try again in a few minutes or choose a different username.');
+      }
+      throw e;
+    }
+    throw e;
+  }
   await updateProfile(cred.user, { displayName });
 
   // Generate unique 8-digit account number
@@ -115,6 +132,28 @@ export async function loginUser(email: string, password: string) {
 
 export async function signOut() {
   return firebaseSignOut(auth);
+}
+
+export async function deleteFirebaseAccount(userId: string) {
+  const currentUser = auth.currentUser;
+  // Delete all Firestore data
+  try {
+    // Notifications subcollection
+    const notifs = await getDocs(collection(db, 'users', userId, 'notifications'));
+    for (const n of notifs.docs) await n.ref.delete();
+  } catch {}
+  try { await setDoc(doc(db, 'users', userId), { __deleted: true }, { merge: false }); } catch {}
+  try { const userRef = doc(db, 'users', userId); await userRef.delete(); } catch {}
+  try { await doc(db, 'portfolios', userId).delete(); } catch {}
+  try { await doc(db, 'leaderboard', userId).delete(); } catch {}
+  try {
+    const txns = await getDocs(query(collection(db, 'transactions'), where('userId', '==', userId)));
+    for (const t of txns.docs) await t.ref.delete();
+  } catch {}
+  // Delete the Firebase Auth account (only works if this is the signed-in user)
+  if (currentUser && currentUser.uid === userId) {
+    try { await deleteUser(currentUser); } catch {}
+  }
 }
 
 export function onAuthChange(callback: (user: FirebaseUser | null) => void) {
