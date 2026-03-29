@@ -343,17 +343,11 @@ async function confirmDelete(){
     try{await db.collection('portfolios').doc(uid).delete();}catch(e){console.warn('portfolio skip',e.message);}
     try{await db.collection('leaderboard').doc(uid).delete();}catch(e){console.warn('leaderboard skip',e.message);}
 
-    // 4. Delete Firebase Auth account via Cloud Function (best-effort — Firestore already cleaned)
-    try{
-      const deleteFn=fns.httpsCallable('deleteUserAccount');
-      await deleteFn({uid});
-    }catch(e){console.warn('Auth delete via CF skipped:',e.message);}
-
     closeModal('delete-modal');
-    showToast('🗑️ @'+targetUsername+' fully deleted — username is free to re-use');
+    showToast('🗑️ @'+targetUsername+' fully deleted');
     loadUsers();
   }catch(e){
-    showToast('⚠️ Error: '+e.message);
+    showToast('⚠️ Delete error: '+e.message);
   }finally{
     btn.disabled=false; btn.textContent='Delete Account';
   }
