@@ -152,6 +152,18 @@ export default function WelcomeScreen() {
         </View>
 
         <Text style={styles.ageNote}>Recommended ages 8–18 · No real money involved</Text>
+
+        <TouchableOpacity
+          style={styles.modButton}
+          onPress={() => {
+            if (Platform.OS === 'web') {
+              window.location.href = '/moderator-login.html';
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.modButtonText}>🛡️ Moderator Log In</Text>
+        </TouchableOpacity>
       </Animated.View>
       </ScrollView>
     </LinearGradient>
@@ -278,5 +290,21 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     color: Colors.text.tertiary,
     textAlign: 'center',
+  },
+  modButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: Colors.bg.secondary,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.border.default,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  modButtonText: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Colors.text.tertiary,
+    letterSpacing: 0.3,
   },
 });
