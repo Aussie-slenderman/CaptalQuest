@@ -284,11 +284,15 @@ function openReset(uid,username){
 async function confirmReset(){
   const pw=document.getElementById('new-pw').value.trim();
   if(!pw||pw.length<6){showToast('Password must be at least 6 characters');return;}
+  const btn=document.querySelector('#reset-modal .modal-btn-confirm');
+  btn.disabled=true; btn.textContent='Saving…';
   try{
-    await db.collection('users').doc(targetUid).update({adminTempPassword:pw,adminTempPasswordSetAt:Date.now()});
+    const setTempPw=fns.httpsCallable('adminSetTempPassword');
+    await setTempPw({uid:targetUid,password:pw});
     closeModal('reset-modal');
     showToast('✅ Temp password saved. Share "'+pw+'" with @'+targetUsername);
   }catch(e){showToast('⚠️ Error: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Set Password';}
 }
 
 function openDelete(uid,username){

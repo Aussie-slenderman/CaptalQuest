@@ -4,7 +4,7 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 // Allowed admin emails
-const ADMIN_EMAILS = ['theosmales1@gmail.com'];
+const ADMIN_EMAILS = ['theosmales1@gmail.com', 'cq.admin.mod@capitalquest.app'];
 
 /**
  * deleteUserAccount — callable function
@@ -67,5 +67,37 @@ exports.deleteUserAccount = functions.https.onCall(async (data, context) => {
   await batch.commit();
 
   console.log(`deleteUserAccount: fully deleted uid=${uid}`);
+  return { success: true };
+});
+
+/**
+ * adminSetTempPassword — callable function
+ * Saves a temporary password to the user's Firestore doc.
+ * Called with: { uid: string, password: string }
+ */
+exports.adminSetTempPassword = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  const callerEmail = (context.auth.token.email || '').toLowerCase();
+  if (!ADMIN_EMAILS.includes(callerEmail)) {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorised.');
+  }
+
+  const { uid, password } = data;
+  if (!uid || !password) {
+    throw new functions.https.HttpsError('invalid-argument', 'uid and password are required.');
+  }
+  if (password.length < 6) {
+    throw new functions.https.HttpsError('invalid-argument', 'Password must be at least 6 characters.');
+  }
+
+  await admin.firestore().collection('users').doc(uid).update({
+    adminTempPassword: password,
+    adminTempPasswordSetAt: Date.now()
+  });
+
+  console.log(`adminSetTempPassword: set temp password for uid=${uid}`);
   return { success: true };
 });
