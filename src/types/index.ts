@@ -41,7 +41,7 @@ export interface ChartDataPoint {
   volume: number;
 }
 
-export type ChartPeriod = '1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y';
+export type ChartPeriod = '1D' | '1W' | '1M' | '1Y' | '5Y';
 
 export interface MarketIndex {
   symbol: string;
