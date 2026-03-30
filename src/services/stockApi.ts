@@ -346,15 +346,14 @@ async function ensureYahooSession(): Promise<void> {
 
   try {
     if (Platform.OS === 'web') {
-      // Web: route through CORS proxies since we can't hit Yahoo directly due to CORS.
+      // Web: try to get crumb via CORS proxies. Crumb is optional — v8/chart often works without it.
       try {
-        const crumbData = await fetchWithCorsProxy('https://query2.finance.yahoo.com/v1/test/getcrumb', 10_000);
-        if (typeof crumbData === 'string' && crumbData.length > 0 && crumbData !== 'null') {
-          _yahooCrumb = (crumbData as string).trim();
+        const crumbData = await fetchWithCorsProxy('https://query1.finance.yahoo.com/v1/test/getcrumb', 8_000);
+        if (typeof crumbData === 'string' && crumbData.length > 0 && crumbData.length < 50 && crumbData !== 'null') {
+          _yahooCrumb = crumbData.trim();
           _crumbExpiry = Date.now() + 3_600_000;
         }
       } catch {
-        // Crumb is optional — v8/finance/chart often works without it
         _yahooCrumb = null;
       }
     } else {
@@ -395,20 +394,45 @@ async function ensureYahooSession(): Promise<void> {
   }
 }
 
-// Multiple CORS proxies for reliability
-const CORS_PROXIES = [
-  (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+// Multiple CORS proxies for reliability — each returns { url, parse } so we can handle different response formats
+const CORS_PROXIES: Array<{ make: (url: string) => string; parse: (data: unknown) => unknown }> = [
+  {
+    make: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    parse: (data) => {
+      // allorigins /get returns { contents: "...", status: { ... } }
+      const d = data as Record<string, unknown>;
+      if (typeof d?.contents === 'string') {
+        try { return JSON.parse(d.contents); } catch { return d.contents; }
+      }
+      return data;
+    },
+  },
+  {
+    make: (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    parse: (data) => data,
+  },
+  {
+    make: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    parse: (data) => data,
+  },
 ];
 
 async function fetchWithCorsProxy(url: string, timeout = 15_000): Promise<unknown> {
-  for (const makeProxy of CORS_PROXIES) {
-    try {
-      const proxyUrl = makeProxy(url);
-      const res = await axios.get(proxyUrl, { timeout });
-      if (res.data) return res.data;
-    } catch { /* try next proxy */ }
+  // Also try query1 as fallback base URL
+  const urls = [url];
+  if (url.includes('query2.finance.yahoo.com')) {
+    urls.push(url.replace('query2.finance.yahoo.com', 'query1.finance.yahoo.com'));
+  }
+
+  for (const targetUrl of urls) {
+    for (const proxy of CORS_PROXIES) {
+      try {
+        const proxyUrl = proxy.make(targetUrl);
+        const res = await axios.get(proxyUrl, { timeout });
+        const parsed = proxy.parse(res.data);
+        if (parsed) return parsed;
+      } catch { /* try next */ }
+    }
   }
   throw new Error('All CORS proxies failed');
 }
@@ -599,6 +623,27 @@ async function yahooSearch(query: string): Promise<SearchResult[]> {
   }
 }
 
+function parseYahooChartResponse(data: unknown): ChartDataPoint[] {
+  const d = data as Record<string, unknown>;
+  const chart = d?.chart as Record<string, unknown> | undefined;
+  const result = (chart?.result as Array<Record<string, unknown>> | undefined)?.[0];
+  if (!result) return [];
+  const ts = result.timestamp as number[] | undefined;
+  if (!ts || ts.length === 0) return [];
+  const indicators = result.indicators as Record<string, unknown> | undefined;
+  const quoteArr = indicators?.quote as Array<Record<string, unknown>> | undefined;
+  const q = quoteArr?.[0];
+  if (!q) return [];
+  return ts.map((t: number, i: number) => ({
+    timestamp: t * 1000,
+    open: Number((q.open as number[])?.[i] ?? 0),
+    high: Number((q.high as number[])?.[i] ?? 0),
+    low: Number((q.low as number[])?.[i] ?? 0),
+    close: Number((q.close as number[])?.[i] ?? 0),
+    volume: Number((q.volume as number[])?.[i] ?? 0),
+  })).filter((p: ChartDataPoint) => p.close > 0);
+}
+
 async function yahooGetChartData(symbol: string, period: ChartPeriod): Promise<ChartDataPoint[]> {
   const rangeMap: Record<ChartPeriod, { interval: string; range: string }> = {
     '1D': { interval: '5m',  range: '1d' },
@@ -610,30 +655,33 @@ async function yahooGetChartData(symbol: string, period: ChartPeriod): Promise<C
     '5Y': { interval: '1mo', range: '5y' },
   };
   const { interval, range } = rangeMap[period];
+
+  // Try through yahooFetch (uses CORS proxies)
   try {
     const data = await yahooFetch(`/v8/finance/chart/${encodeURIComponent(symbol)}`, {
       interval, range, includePrePost: false,
-    }) as Record<string, unknown>;
-    const chart = data?.chart as Record<string, unknown> | undefined;
-    const result = (chart?.result as Array<Record<string, unknown>> | undefined)?.[0];
-    if (!result) return [];
-    const ts = result.timestamp as number[] | undefined;
-    if (!ts) return [];
-    const indicators = result.indicators as Record<string, unknown> | undefined;
-    const quoteArr = indicators?.quote as Array<Record<string, unknown>> | undefined;
-    const q = quoteArr?.[0];
-    if (!q) return [];
-    return ts.map((t: number, i: number) => ({
-      timestamp: t * 1000,
-      open: Number((q.open as number[])?.[i] ?? 0),
-      high: Number((q.high as number[])?.[i] ?? 0),
-      low: Number((q.low as number[])?.[i] ?? 0),
-      close: Number((q.close as number[])?.[i] ?? 0),
-      volume: Number((q.volume as number[])?.[i] ?? 0),
-    })).filter((p: ChartDataPoint) => p.close > 0);
-  } catch {
-    return [];
+    });
+    const points = parseYahooChartResponse(data);
+    if (points.length > 0) return points;
+  } catch { /* fall through */ }
+
+  // Direct attempt with each CORS proxy + each Yahoo base URL (without crumb)
+  const bases = ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com'];
+  const qs = `?interval=${interval}&range=${range}&includePrePost=false`;
+  for (const base of bases) {
+    const chartUrl = `${base}/v8/finance/chart/${encodeURIComponent(symbol)}${qs}`;
+    for (const proxy of CORS_PROXIES) {
+      try {
+        const proxyUrl = proxy.make(chartUrl);
+        const res = await axios.get(proxyUrl, { timeout: 15_000 });
+        const parsed = proxy.parse(res.data);
+        const points = parseYahooChartResponse(parsed);
+        if (points.length > 0) return points;
+      } catch { /* try next */ }
+    }
   }
+
+  return [];
 }
 
 // In-memory cache (TTL: 30s for real-time quotes)
