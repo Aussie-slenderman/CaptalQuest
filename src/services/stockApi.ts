@@ -327,9 +327,10 @@ const finnhub = axios.create({
 });
 
 // Yahoo Finance — same data Apple's Stocks app uses; no API key needed
-// On web (browser), we route through a CORS proxy since browsers block cross-origin requests.
+// On web (browser), we route through our own Cloudflare Worker CORS proxy.
 // On native iOS/Android, Yahoo Finance works directly (no CORS restrictions).
 const YAHOO_BASE = 'https://query2.finance.yahoo.com';
+const CQ_PROXY = 'https://cq-yahoo-proxy.capitalquest.workers.dev';
 const YAHOO_MOBILE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
 
 // ─── Yahoo Finance session (crumb) management ─────────────────────────────────
@@ -346,11 +347,12 @@ async function ensureYahooSession(): Promise<void> {
 
   try {
     if (Platform.OS === 'web') {
-      // Web: try to get crumb via CORS proxies. Crumb is optional — v8/chart often works without it.
+      // Web: try to get crumb via our Cloudflare Worker proxy
       try {
-        const crumbData = await fetchWithCorsProxy('https://query1.finance.yahoo.com/v1/test/getcrumb', 8_000);
-        if (typeof crumbData === 'string' && crumbData.length > 0 && crumbData.length < 50 && crumbData !== 'null') {
-          _yahooCrumb = crumbData.trim();
+        const proxyUrl = `${CQ_PROXY}?url=${encodeURIComponent('https://query1.finance.yahoo.com/v1/test/getcrumb')}`;
+        const res = await axios.get(proxyUrl, { timeout: 8_000 });
+        if (typeof res.data === 'string' && res.data.length > 0 && res.data.length < 50 && res.data !== 'null') {
+          _yahooCrumb = res.data.trim();
           _crumbExpiry = Date.now() + 3_600_000;
         }
       } catch {
@@ -394,47 +396,26 @@ async function ensureYahooSession(): Promise<void> {
   }
 }
 
-// Multiple CORS proxies for reliability — each returns { url, parse } so we can handle different response formats
-const CORS_PROXIES: Array<{ make: (url: string) => string; parse: (data: unknown) => unknown }> = [
-  {
-    make: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    parse: (data) => {
-      // allorigins /get returns { contents: "...", status: { ... } }
-      const d = data as Record<string, unknown>;
-      if (typeof d?.contents === 'string') {
-        try { return JSON.parse(d.contents); } catch { return d.contents; }
-      }
-      return data;
-    },
-  },
-  {
-    make: (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-    parse: (data) => data,
-  },
-  {
-    make: (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-    parse: (data) => data,
-  },
-];
-
+// CORS proxy — uses our own Cloudflare Worker (free, 100K req/day)
 async function fetchWithCorsProxy(url: string, timeout = 15_000): Promise<unknown> {
-  // Also try query1 as fallback base URL
-  const urls = [url];
+  // Primary: our own Cloudflare Worker proxy
+  try {
+    const proxyUrl = `${CQ_PROXY}?url=${encodeURIComponent(url)}`;
+    const res = await axios.get(proxyUrl, { timeout });
+    if (res.data) return res.data;
+  } catch { /* fall through */ }
+
+  // Also try query1 if query2 failed
   if (url.includes('query2.finance.yahoo.com')) {
-    urls.push(url.replace('query2.finance.yahoo.com', 'query1.finance.yahoo.com'));
+    const url1 = url.replace('query2.finance.yahoo.com', 'query1.finance.yahoo.com');
+    try {
+      const proxyUrl = `${CQ_PROXY}?url=${encodeURIComponent(url1)}`;
+      const res = await axios.get(proxyUrl, { timeout });
+      if (res.data) return res.data;
+    } catch { /* fall through */ }
   }
 
-  for (const targetUrl of urls) {
-    for (const proxy of CORS_PROXIES) {
-      try {
-        const proxyUrl = proxy.make(targetUrl);
-        const res = await axios.get(proxyUrl, { timeout });
-        const parsed = proxy.parse(res.data);
-        if (parsed) return parsed;
-      } catch { /* try next */ }
-    }
-  }
-  throw new Error('All CORS proxies failed');
+  throw new Error('CORS proxy failed');
 }
 
 async function yahooFetch(path: string, params?: Record<string, string | number | boolean>): Promise<unknown> {
@@ -663,20 +644,17 @@ async function yahooGetChartData(symbol: string, period: ChartPeriod): Promise<C
     if (points.length > 0) return points;
   } catch { /* fall through */ }
 
-  // Direct attempt with each CORS proxy + each Yahoo base URL (without crumb)
+  // Direct attempt with Cloudflare Worker proxy (without crumb — v8 chart works without it)
   const bases = ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com'];
   const qs = `?interval=${interval}&range=${range}&includePrePost=false`;
   for (const base of bases) {
     const chartUrl = `${base}/v8/finance/chart/${encodeURIComponent(symbol)}${qs}`;
-    for (const proxy of CORS_PROXIES) {
-      try {
-        const proxyUrl = proxy.make(chartUrl);
-        const res = await axios.get(proxyUrl, { timeout: 15_000 });
-        const parsed = proxy.parse(res.data);
-        const points = parseYahooChartResponse(parsed);
-        if (points.length > 0) return points;
-      } catch { /* try next */ }
-    }
+    try {
+      const proxyUrl = `${CQ_PROXY}?url=${encodeURIComponent(chartUrl)}`;
+      const res = await axios.get(proxyUrl, { timeout: 15_000 });
+      const points = parseYahooChartResponse(res.data);
+      if (points.length > 0) return points;
+    } catch { /* try next base */ }
   }
 
   return [];
