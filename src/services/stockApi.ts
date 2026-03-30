@@ -346,14 +346,16 @@ async function ensureYahooSession(): Promise<void> {
 
   try {
     if (Platform.OS === 'web') {
-      // Web: route through corsproxy since we can't hit Yahoo directly due to CORS.
-      // The /v1/test/getcrumb endpoint often returns a crumb even without a prior cookie
-      // when accessed through a proxy (the proxy shares server-side cookies).
-      const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent('https://query2.finance.yahoo.com/v1/test/getcrumb')}`;
-      const res = await axios.get(proxyUrl, { timeout: 10_000 });
-      if (typeof res.data === 'string' && res.data.length > 0 && res.data !== 'null') {
-        _yahooCrumb = res.data.trim();
-        _crumbExpiry = Date.now() + 3_600_000;
+      // Web: route through CORS proxies since we can't hit Yahoo directly due to CORS.
+      try {
+        const crumbData = await fetchWithCorsProxy('https://query2.finance.yahoo.com/v1/test/getcrumb', 10_000);
+        if (typeof crumbData === 'string' && crumbData.length > 0 && crumbData !== 'null') {
+          _yahooCrumb = (crumbData as string).trim();
+          _crumbExpiry = Date.now() + 3_600_000;
+        }
+      } catch {
+        // Crumb is optional — v8/finance/chart often works without it
+        _yahooCrumb = null;
       }
     } else {
       // Native: do the full cookie → crumb handshake directly
@@ -393,6 +395,24 @@ async function ensureYahooSession(): Promise<void> {
   }
 }
 
+// Multiple CORS proxies for reliability
+const CORS_PROXIES = [
+  (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+
+async function fetchWithCorsProxy(url: string, timeout = 15_000): Promise<unknown> {
+  for (const makeProxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = makeProxy(url);
+      const res = await axios.get(proxyUrl, { timeout });
+      if (res.data) return res.data;
+    } catch { /* try next proxy */ }
+  }
+  throw new Error('All CORS proxies failed');
+}
+
 async function yahooFetch(path: string, params?: Record<string, string | number | boolean>): Promise<unknown> {
   // Ensure we have a valid session (crumb) before making data requests
   await ensureYahooSession();
@@ -407,10 +427,19 @@ async function yahooFetch(path: string, params?: Record<string, string | number 
   const fullUrl = `${YAHOO_BASE}${path}${queryStr}`;
 
   if (Platform.OS === 'web') {
-    // Use CORS proxy for browser environments
-    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(fullUrl)}`;
-    const res = await axios.get(proxyUrl, { timeout: 15_000 });
-    return res.data;
+    // Try without crumb first (v8 chart often works without it)
+    try {
+      return await fetchWithCorsProxy(fullUrl);
+    } catch {}
+    // Try without crumb param
+    if (_yahooCrumb) {
+      const paramsNoCrumb = { ...params };
+      const qsNoCrumb = Object.keys(paramsNoCrumb).length > 0
+        ? '?' + Object.entries(paramsNoCrumb).map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&')
+        : '';
+      return await fetchWithCorsProxy(`${YAHOO_BASE}${path}${qsNoCrumb}`);
+    }
+    throw new Error('Yahoo fetch failed');
   } else {
     const res = await axios.get(fullUrl, {
       timeout: 12_000,
@@ -656,8 +685,7 @@ export async function getQuotes(symbols: string[]): Promise<Record<string, Stock
 
     let data: unknown;
     if (Platform.OS === 'web') {
-      const res = await axios.get(`https://corsproxy.io/?url=${encodeURIComponent(fullUrl)}`, { timeout: 15_000 });
-      data = res.data;
+      data = await fetchWithCorsProxy(fullUrl);
     } else {
       const res = await axios.get(fullUrl, {
         timeout: 12_000,
